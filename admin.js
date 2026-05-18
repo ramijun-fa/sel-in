@@ -1,9 +1,35 @@
 // admin.js - MVP 14단계: 관리자 코칭 및 문의 관리 스크립트
 
+// ==========================================
+// MVP 관리자 접근 제한 (추후 Firebase Auth로 교체 예정)
+// ==========================================
+const ADMIN_PASSWORD = 'selin2026!'; // TODO: 실서비스 시 서버 인증으로 교체
+const SESSION_KEY = 'selin_admin_session';
+
+function checkAdminAuth() {
+    const session = sessionStorage.getItem(SESSION_KEY);
+    if (session === 'authenticated') return true;
+
+    const input = prompt('관리자 비밀번호를 입력하세요:');
+    if (input === ADMIN_PASSWORD) {
+        sessionStorage.setItem(SESSION_KEY, 'authenticated');
+        return true;
+    }
+
+    document.body.innerHTML = `
+        <div style="display:flex; align-items:center; justify-content:center; height:100vh; font-family:sans-serif; flex-direction:column; gap:16px;">
+            <h2 style="color:#c53030;">⛔ 접근 권한이 없습니다</h2>
+            <p style="color:#666;">관리자 전용 페이지입니다.</p>
+            <button onclick="location.reload()" style="padding:10px 20px; background:#2b6cb0; color:white; border:none; border-radius:6px; cursor:pointer;">다시 시도</button>
+        </div>`;
+    return false;
+}
+
 let requestsData = [];
 let currentReqId = null;
 
 document.addEventListener("DOMContentLoaded", () => {
+    if (!checkAdminAuth()) return; // 인증 실패 시 이후 코드 실행 안 함
     loadRequests();
     renderList();
 });
