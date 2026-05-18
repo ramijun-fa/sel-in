@@ -912,7 +912,14 @@ body {
 .dimension-row {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.dimension-row .input-field {
+    width: 100%;
+    min-width: 0;
 }
 
 .input-field {

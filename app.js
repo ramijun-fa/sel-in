@@ -654,6 +654,51 @@ function toggleStepCheck(checkboxEle, itemId) {
 }
 
 // ==========================================
+// 시공 부위 선택 상태 보관 ('wall' | 'floor' | 'both')
+let calculatorAreaMode = 'wall';
+
+function switchCalculatorAreaMode(mode) {
+    calculatorAreaMode = mode;
+    
+    // 모든 탭 버튼 비활성화 스타일 처리
+    const btnWall = document.getElementById('tab-btn-wall');
+    const btnFloor = document.getElementById('tab-btn-floor');
+    const btnBoth = document.getElementById('tab-btn-both');
+    
+    [btnWall, btnFloor, btnBoth].forEach(btn => {
+        if (btn) {
+            btn.style.background = 'transparent';
+            btn.style.color = 'var(--text-sub)';
+            btn.style.boxShadow = 'none';
+            btn.classList.remove('active');
+        }
+    });
+    
+    // 선택된 탭 활성화 스타일 적용
+    const activeBtn = document.getElementById(`tab-btn-${mode}`);
+    if (activeBtn) {
+        activeBtn.style.background = 'white';
+        activeBtn.style.color = 'var(--primary)';
+        activeBtn.style.boxShadow = '0 2px 4px rgba(0,0,0,0.05)';
+        activeBtn.classList.add('active');
+    }
+    
+    // 입력 영역 컨테이너 토글
+    const wallSec = document.getElementById('calc-wall-section');
+    const floorSec = document.getElementById('calc-floor-section');
+    
+    if (mode === 'wall') {
+        if (wallSec) wallSec.style.display = 'block';
+        if (floorSec) floorSec.style.display = 'none';
+    } else if (mode === 'floor') {
+        if (wallSec) wallSec.style.display = 'none';
+        if (floorSec) floorSec.style.display = 'block';
+    } else if (mode === 'both') {
+        if (wallSec) wallSec.style.display = 'block';
+        if (floorSec) floorSec.style.display = 'block';
+    }
+}
+
 // 전역 선택된 계산기 자재 목록 보관
 let selectedCalculatorMaterials = [];
 
@@ -680,6 +725,10 @@ function toggleCalculatorMaterialChip(materialType, element) {
 
 function goToCalculatorStep() {
     navigate('calculator');
+    // 현재 모드에 맞추어 화면 컨테이너 및 탭 다시 맞춤 동기화
+    setTimeout(() => {
+        switchCalculatorAreaMode(calculatorAreaMode);
+    }, 50);
 }
 
 // 벽면 입력 폼 추가 함수
@@ -688,7 +737,7 @@ function addWallInput() {
     const rowHtml = `
         <div class="dimension-row" style="margin-top:8px;">
             <input type="number" placeholder="가로(m)" class="input-field wall-w">
-            <span>×</span>
+            <span style="color:var(--text-sub); font-weight:bold;">×</span>
             <input type="number" placeholder="세로(m)" class="input-field wall-h">
         </div>
     `;
@@ -717,9 +766,17 @@ function calculateMaterials() {
     const floorH = parseFloat(document.getElementById('floor-h').value) || 0;
     const floorArea = floorW * floorH;
 
-    // 벽면/바닥 면적 둘 다 없으면 기초 경고
-    if (wallArea === 0 && floorArea === 0) {
-        alert("벽면 면적이나 바닥 면적 중 하나 이상의 시공 면적을 정확히 입력해주세요.");
+    // 시공 부위 선택 모드별 입력 값 정밀 검증
+    if (calculatorAreaMode === 'wall' && wallArea === 0) {
+        alert("시공할 벽면 면적(가로 × 세로)을 정확히 입력해 주세요.");
+        return;
+    }
+    if (calculatorAreaMode === 'floor' && floorArea === 0) {
+        alert("시공할 바닥 면적(가로 × 세로)을 정확히 입력해 주세요.");
+        return;
+    }
+    if (calculatorAreaMode === 'both' && wallArea === 0 && floorArea === 0) {
+        alert("벽면 면적이나 바닥 면적 중 최소 하나 이상의 시공 면적을 정확히 입력해 주세요.");
         return;
     }
 
@@ -1709,6 +1766,8 @@ Object.assign(window, {
     // 자재 계산기 (7단계)
     goToCalculatorStep,
     calculateMaterials,
+    toggleCalculatorMaterialChip,
+    switchCalculatorAreaMode,
 
     // 비용 계산기 (8단계)
     goToEstimateStep,

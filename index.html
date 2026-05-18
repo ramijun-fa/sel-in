@@ -577,24 +577,38 @@
 
                     <div class="question-list">
                         <div class="q-card">
-                            <h3 class="card-title" style="margin-bottom: 12px;">1. 벽면 면적 입력</h3>
-                            <div id="wall-inputs" style="display:flex; flex-direction:column; gap:8px; margin-bottom: 12px;">
-                                <div class="dimension-row">
-                                    <input type="number" placeholder="가로(m)" class="input-field wall-w">
-                                    <span>×</span>
-                                    <input type="number" placeholder="세로(m)" class="input-field wall-h">
-                                </div>
-                            </div>
-                            <button class="btn btn-secondary btn-small" style="width:100%; padding: 8px;" onclick="addWallInput()">+ 벽면 추가하기</button>
+                            <!-- 1. 시공 부위 선택 탭 신설 -->
+                            <h3 class="card-title" style="margin-bottom: 8px;">1. 시공 부위 선택</h3>
+                            <p style="font-size:0.75rem; color:var(--text-sub); margin-bottom:12px;">어느 부위의 자재 수량을 계산할지 선택하세요.</p>
                             
-                            <hr style="border:0; border-top:1px dashed var(--border-color); margin: 20px 0;">
+                            <div class="area-selector-tabs" style="display: flex; background: #EDF2F7; padding: 4px; border-radius: 10px; margin-bottom: 20px; gap: 4px; border: 1px solid #E2E8F0;">
+                                <button class="area-tab-btn active" id="tab-btn-wall" onclick="switchCalculatorAreaMode('wall')" style="flex: 1; border: none; padding: 10px 0; border-radius: 8px; font-weight: 700; font-size: 0.85rem; cursor: pointer; transition: all 0.2s; background: white; color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.05);">벽면 시공</button>
+                                <button class="area-tab-btn" id="tab-btn-floor" onclick="switchCalculatorAreaMode('floor')" style="flex: 1; border: none; padding: 10px 0; border-radius: 8px; font-weight: 700; font-size: 0.85rem; cursor: pointer; transition: all 0.2s; background: transparent; color: var(--text-sub);">바닥 시공</button>
+                                <button class="area-tab-btn" id="tab-btn-both" onclick="switchCalculatorAreaMode('both')" style="flex: 1; border: none; padding: 10px 0; border-radius: 8px; font-weight: 700; font-size: 0.85rem; cursor: pointer; transition: all 0.2s; background: transparent; color: var(--text-sub);">둘 다 시공</button>
+                            </div>
 
-                            <h3 class="card-title" style="margin-bottom: 4px;">2. 바닥 면적 입력 <span class="q-sub">(선택 사항)</span></h3>
-                            <p style="font-size:0.75rem; color:var(--text-sub); margin-bottom:12px;">바닥재(장판, 데코타일 등) 시공을 계산할 때만 입력하시면 됩니다.</p>
-                            <div class="dimension-row">
-                                <input type="number" placeholder="가로(m)" class="input-field" id="floor-w">
-                                <span>×</span>
-                                <input type="number" placeholder="세로(m)" class="input-field" id="floor-h">
+                            <!-- 벽면 면적 입력란 래퍼 -->
+                            <div id="calc-wall-section" style="display: block; animation: fadeIn 0.3s ease;">
+                                <h3 class="card-title" style="margin-bottom: 12px;"><i class="fa-solid fa-border-all" style="color:var(--primary); margin-right:4px;"></i> 벽면 면적 입력</h3>
+                                <div id="wall-inputs" style="display:flex; flex-direction:column; gap:8px; margin-bottom: 12px;">
+                                    <div class="dimension-row">
+                                        <input type="number" placeholder="가로(m)" class="input-field wall-w">
+                                        <span style="color:var(--text-sub); font-weight:bold;">×</span>
+                                        <input type="number" placeholder="세로(m)" class="input-field wall-h">
+                                    </div>
+                                </div>
+                                <button class="btn btn-secondary btn-small" style="width:100%; padding: 8px; margin-bottom: 20px;" onclick="addWallInput()">+ 벽면 추가하기</button>
+                            </div>
+
+                            <!-- 바닥 면적 입력란 래퍼 -->
+                            <div id="calc-floor-section" style="display: none; animation: fadeIn 0.3s ease;">
+                                <h3 class="card-title" style="margin-bottom: 4px;"><i class="fa-solid fa-square" style="color:var(--primary); margin-right:4px;"></i> 바닥 면적 입력</h3>
+                                <p style="font-size:0.75rem; color:var(--text-sub); margin-bottom:12px;">바닥재 시공 소요량을 정밀 산출하기 위해 크기를 채워주세요.</p>
+                                <div class="dimension-row" style="margin-bottom: 20px;">
+                                    <input type="number" placeholder="가로(m)" class="input-field" id="floor-w">
+                                    <span style="color:var(--text-sub); font-weight:bold;">×</span>
+                                    <input type="number" placeholder="세로(m)" class="input-field" id="floor-h">
+                                </div>
                             </div>
 
                             <hr style="border:0; border-top:1px dashed var(--border-color); margin: 20px 0;">
