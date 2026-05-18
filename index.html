@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>셀프 인테리어 파트너</title>
+    <!-- 폰트 적용 (Pretendard) -->
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <!-- 아이콘 적용 (FontAwesome) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- 모바일 화면을 PC 중앙에 띄우기 위한 래퍼 -->
+    <div class="app-wrapper">
+        <!-- 모바일 뷰포트 -->
+        <div class="mobile-viewport">
+            
+            <!-- 상단 헤더 -->
+            <header class="top-nav">
+                <div class="logo">
+                    <i class="fa-solid fa-house-chimney-user"></i> 셀인케어
+                </div>
+                <div class="menu-btn">
+                    <i class="fa-solid fa-bars"></i>
+                </div>
+            </header>
+
+            <!-- 메인 콘텐츠 영역 (동적으로 뷰 전환) -->
+            <main id="app-content">
+                
+                <!-- 뷰: 홈 화면 -->
+                <section id="view-home" class="view-section active">
+                    <!-- 1. 핵심 헤드라인 -->
+                    <div class="hero-section">
+                        <h1>셀프 인테리어,<br>무작정 하지 마세요.</h1>
+                        <p>AI가 예산·공정·위험까지<br>함께 분석해드립니다.</p>
+                    </div>
+                    
+                    <!-- 현재 작업 중인 프로젝트 상단 표시 -->
+                    <div id="current-project-card" class="q-card" style="margin:20px; margin-bottom:0; background-color: #EBF8FF; border-color: #BEE3F8; display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <h3 id="current-project-name" style="margin:0; font-size:1rem; color:#2B6CB0;">새 프로젝트 (작성 중)</h3>
+                            <p style="margin:4px 0 0 0; font-size:0.8rem; color:#2C5282;" id="current-project-status">상태: 미저장</p>
+                        </div>
+                        <button class="btn btn-primary btn-small" onclick="openSaveModal()">저장</button>
+                    </div>
+
+                    <!-- 2. 메인 CTA 버튼 3개 -->
+                    <div class="cta-section">
+                        <button class="btn btn-primary btn-large" onclick="navigate('problem')">
+                            <div class="btn-content">
+                                <i class="fa-solid fa-clipboard-check"></i>
+                                <span>문제 해결 시작하기</span>
+                            </div>
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </button>
+                        <button class="btn btn-secondary btn-large" onclick="navigate('budget')">
+                            <div class="btn-content">
+                                <i class="fa-solid fa-calculator"></i>
+                                <span>예산으로 계획 세우기</span>
+                            </div>
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </button>
+                        <button class="btn btn-secondary btn-large" onclick="navigate('diagnosis')">
+                            <div class="btn-content">
+                                <i class="fa-solid fa-stethoscope"></i>
+                                <span>셀프로 가능한지 확인하기</span>
+                            </div>
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </button>
+                    </div>
+
+                    <!-- 1.5. 내 프로젝트 관리 섹션 (MVP 13단계) -->
+                    <div class="content-section" style="margin-top:20px;">
+                        <div class="card" style="display:flex; justify-content:space-between; align-items:center; cursor:pointer; background:#EBF8FF; border-color:#BEE3F8;" onclick="goToProjectsList()">
+                            <div>
+                                <h4 style="margin:0; color:#2B6CB0;"><i class="fa-solid fa-folder-open"></i> 내 프로젝트 관리</h4>
+                                <p style="margin:4px 0 0 0; font-size:0.85rem; color:#2C5282;">저장된 시공 프로젝트 확인 및 이어하기</p>
+                            </div>
+                            <i class="fa-solid fa-chevron-right" style="color:#2B6CB0;"></i>
+                        </div>
+                    </div>
+
+                    <!-- 3. 인기 문제 카드 -->
+                    <div class="content-section">
+                        <h2 class="section-title">가장 많이 겪는 문제들</h2>
+                        <div class="scroll-row">
+                            <div class="card problem-card" onclick="navigate('detail')">
+                                <div class="card-icon"><i class="fa-solid fa-droplet-slash"></i></div>
+                                <h3>결로/곰팡이</h3>
+                                <p>단열 페인트와 기밀 시공법</p>
+                            </div>
+                            <div class="card problem-card" onclick="navigate('detail')">
+                                <div class="card-icon"><i class="fa-solid fa-temperature-arrow-up"></i></div>
+                                <h3>단열 개선</h3>
+                                <p>틈새 없는 단열재 부착</p>
+                            </div>
+                            <div class="card problem-card" onclick="navigate('detail')">
+                                <div class="card-icon"><i class="fa-solid fa-bath"></i></div>
+                                <h3>욕실 보수</h3>
+                                <p>실리콘/줄눈 및 방수</p>
+                            </div>
+                            <div class="card problem-card" onclick="navigate('detail')">
+                                <div class="card-icon"><i class="fa-solid fa-shoe-prints"></i></div>
+                                <h3>장판/바닥</h3>
+                                <p>들뜸 방지 및 평탄화</p>
+                            </div>
+                            <div class="card problem-card" onclick="navigate('detail')">
+                                <div class="card-icon"><i class="fa-solid fa-paint-roller"></i></div>
+                                <h3>벽체/도배/페인트</h3>
+                                <p>퍼티 작업과 이음새 보수</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4. 서비스 핵심 기능 소개 카드 -->
+                    <div class="content-section feature-section">
+                        <h2 class="section-title">셀인케어 핵심 기능</h2>
+                        <div class="grid-layout">
+                            <div class="card feature-card">
+                                <i class="fa-solid fa-coins"></i>
+                                <h4>예산 맞춤 계획</h4>
+                            </div>
+                            <div class="card feature-card">
+                                <i class="fa-solid fa-list-check"></i>
+                                <h4>목적 맞춤 공정</h4>
+                            </div>
+                            <div class="card feature-card">
+                                <i class="fa-solid fa-shield-halved"></i>
+                                <h4>공정 검증</h4>
+                            </div>
+                            <div class="card feature-card">
+                                <i class="fa-solid fa-user-tie"></i>
+                                <h4>전문가 코칭</h4>
+                            </div>
+                            <div class="card feature-card full-width" onclick="goToDocumentStep()">
+                                <i class="fa-regular fa-file-pdf"></i>
+                                <h4>필요 서류/PDF 자동 완성 제공</h4>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 뷰: 문제/목적 선택 화면 (MVP 2단계) -->
+                <section id="view-problem" class="view-section">
+                    <div class="header-section">
+                        <h2>어떤 문제를<br>해결하고 싶으신가요?</h2>
+                        <p>해결하고 싶은 1가지 목표를 선택해주세요.</p>
+                    </div>
+
+                    <div class="selection-grid">
+                        <!-- 카드 1 -->
+                        <div class="card selection-card" onclick="selectProblem('mold', this)">
+                            <div class="card-icon"><i class="fa-solid fa-spray-can-sparkles"></i></div>
+                            <div class="card-info">
+                                <h3>곰팡이 해결</h3>
+                                <p>퀴퀴한 냄새의 원인, 까만 곰팡이를 뿌리 뽑습니다.</p>
+                                <div class="badge-group">
+                                    <span class="badge diff-medium">난이도: 보통</span>
+                                    <span class="badge risk-medium">실패위험: 중간</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 카드 2 -->
+                        <div class="card selection-card" onclick="selectProblem('condensation', this)">
+                            <div class="card-icon"><i class="fa-solid fa-droplet-slash"></i></div>
+                            <div class="card-info">
+                                <h3>결로 해결</h3>
+                                <p>벽에 물방울이 맺히는 현상을 막아 뽀송하게 만듭니다.</p>
+                                <div class="badge-group">
+                                    <span class="badge diff-medium">난이도: 보통</span>
+                                    <span class="badge risk-high">실패위험: 높음</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 카드 3 -->
+                        <div class="card selection-card" onclick="selectProblem('insulation', this)">
+                            <div class="card-icon"><i class="fa-solid fa-temperature-arrow-up"></i></div>
+                            <div class="card-info">
+                                <h3>단열 개선</h3>
+                                <p>여름엔 시원하고 겨울엔 따뜻하게, 에너지를 잡습니다.</p>
+                                <div class="badge-group">
+                                    <span class="badge diff-hard">난이도: 어려움</span>
+                                    <span class="badge risk-high">실패위험: 높음</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 카드 4 -->
+                        <div class="card selection-card" onclick="selectProblem('bathroom', this)">
+                            <div class="card-icon"><i class="fa-solid fa-bath"></i></div>
+                            <div class="card-info">
+                                <h3>욕실 보수</h3>
+                                <p>낡은 욕실의 실리콘을 새로 바르고 방수를 높입니다.</p>
+                                <div class="badge-group">
+                                    <span class="badge diff-medium">난이도: 보통</span>
+                                    <span class="badge risk-high">실패위험: 높음</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 카드 5 -->
+                        <div class="card selection-card" onclick="selectProblem('floor', this)">
+                            <div class="card-icon"><i class="fa-solid fa-shoe-prints"></i></div>
+                            <div class="card-info">
+                                <h3>장판/바닥 교체</h3>
+                                <p>낡고 찍힌 바닥을 걷어내고, 깔끔한 바닥재를 깝니다.</p>
+                                <div class="badge-group">
+                                    <span class="badge diff-medium">난이도: 보통</span>
+                                    <span class="badge risk-medium">실패위험: 중간</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 카드 6 -->
+                        <div class="card selection-card" onclick="selectProblem('wall', this)">
+                            <div class="card-icon"><i class="fa-solid fa-paint-roller"></i></div>
+                            <div class="card-info">
+                                <h3>벽체/도배/페인트</h3>
+                                <p>울퉁불퉁한 벽면을 펴고 원하는 색상으로 꾸밉니다.</p>
+                                <div class="badge-group">
+                                    <span class="badge diff-medium">난이도: 보통</span>
+                                    <span class="badge risk-low">실패위험: 낮음</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 카드 7 -->
+                        <div class="card selection-card" onclick="selectProblem('full', this)">
+                            <div class="card-icon"><i class="fa-solid fa-house-chimney-crack"></i></div>
+                            <div class="card-info">
+                                <h3>전체 셀프 리모델링</h3>
+                                <p>집 전체를 내 손으로! 철거부터 마감까지 큰 도전입니다.</p>
+                                <div class="badge-group">
+                                    <span class="badge diff-hard">난이도: 어려움</span>
+                                    <span class="badge risk-high">실패위험: 높음</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 카드 8 -->
+                        <div class="card selection-card" onclick="selectProblem('unknown', this)">
+                            <div class="card-icon"><i class="fa-solid fa-circle-question"></i></div>
+                            <div class="card-info">
+                                <h3>아직 잘 모르겠어요</h3>
+                                <p>어디서부터 시작해야 할지 막막하다면 진단해 드릴게요.</p>
+                                <div class="badge-group">
+                                    <span class="badge diff-easy">난이도: 쉬움</span>
+                                    <span class="badge risk-low">실패위험: 낮음</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 하단 고정: 다음 단계 버튼 -->
+                    <div class="bottom-action-bar">
+                        <button id="btn-next-step" class="btn btn-primary btn-large disabled" onclick="goToNextStep()">
+                            <span>집 정보 입력하기</span>
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </section>
+
+                <!-- 뷰: 집 정보 및 현장 상황 입력 화면 (MVP 3단계) -->
+                <section id="view-questionnaire" class="view-section">
+                    <div class="header-section" style="padding-bottom: 10px;">
+                        <h2 id="question-title">현장 상황을<br>알려주세요</h2>
+                        <p>정확한 분석을 위해 집 정보를 입력합니다.</p>
+                    </div>
+
+                    <div class="question-list">
+                        <!-- 1. 주거 형태 (단일 선택) -->
+                        <div class="q-card">
+                            <div class="q-header">
+                                <span class="q-num">1</span>
+                                <h3>주거 형태</h3>
+                            </div>
+                            <div class="chip-group" id="q-housing">
+                                <div class="chip" onclick="toggleChip('housing', '아파트', false, this)">아파트</div>
+                                <div class="chip" onclick="toggleChip('housing', '빌라', false, this)">빌라</div>
+                                <div class="chip" onclick="toggleChip('housing', '단독주택', false, this)">단독주택</div>
+                                <div class="chip" onclick="toggleChip('housing', '오피스텔', false, this)">오피스텔</div>
+                                <div class="chip" onclick="toggleChip('housing', '상가/사무실', false, this)">상가/사무실</div>
+                                <div class="chip" onclick="toggleChip('housing', '기타', false, this)">기타</div>
+                            </div>
+                        </div>
+
+                        <!-- 2. 건물 상태 (단일 선택) -->
+                        <div class="q-card">
+                            <div class="q-header">
+                                <span class="q-num">2</span>
+                                <h3>건물 상태</h3>
+                            </div>
+                            <div class="chip-group" id="q-building">
+                                <div class="chip" onclick="toggleChip('building', '신축', false, this)">신축 (5년 이하)</div>
+                                <div class="chip" onclick="toggleChip('building', '구축', false, this)">구축 (5년 초과)</div>
+                                <div class="chip" onclick="toggleChip('building', '잘 모르겠음', false, this)">잘 모르겠음</div>
+                            </div>
+                        </div>
+
+                        <!-- 3. 공간 (다중 선택) -->
+                        <div class="q-card">
+                            <div class="q-header">
+                                <span class="q-num">3</span>
+                                <h3>문제가 있는 공간 <span class="q-sub">(다중 선택 가능)</span></h3>
+                            </div>
+                            <div class="chip-group" id="q-spaces">
+                                <div class="chip" onclick="toggleChip('spaces', '안방', true, this)">안방</div>
+                                <div class="chip" onclick="toggleChip('spaces', '작은방', true, this)">작은방</div>
+                                <div class="chip" onclick="toggleChip('spaces', '거실', true, this)">거실</div>
+                                <div class="chip" onclick="toggleChip('spaces', '드레스룸', true, this)">드레스룸</div>
+                                <div class="chip" onclick="toggleChip('spaces', '베란다', true, this)">베란다</div>
+                                <div class="chip" onclick="toggleChip('spaces', '욕실', true, this)">욕실</div>
+                                <div class="chip" onclick="toggleChip('spaces', '주방', true, this)">주방</div>
+                                <div class="chip" onclick="toggleChip('spaces', '기타', true, this)">기타</div>
+                            </div>
+                        </div>
+
+                        <!-- 4. 벽면/공간 조건 (다중 선택) -->
+                        <div class="q-card">
+                            <div class="q-header">
+                                <span class="q-num">4</span>
+                                <h3>벽면/공간 조건 <span class="q-sub">(다중 선택 가능)</span></h3>
+                            </div>
+                            <div class="chip-group" id="q-conditions">
+                                <div class="chip" onclick="toggleChip('conditions', '외벽', true, this)">외벽 (바깥과 맞닿은 벽)</div>
+                                <div class="chip" onclick="toggleChip('conditions', '내벽', true, this)">내벽 (실내끼리 맞닿은 벽)</div>
+                                <div class="chip" onclick="toggleChip('conditions', '창가 주변', true, this)">창가 주변</div>
+                                <div class="chip" onclick="toggleChip('conditions', '천장', true, this)">천장</div>
+                                <div class="chip" onclick="toggleChip('conditions', '바닥', true, this)">바닥</div>
+                                <div class="chip" onclick="toggleChip('conditions', '잘 모르겠음', true, this)">잘 모르겠음</div>
+                            </div>
+                        </div>
+
+                        <!-- 5. 현재 증상 (다중 선택) -->
+                        <div class="q-card">
+                            <div class="q-header">
+                                <span class="q-num">5</span>
+                                <h3>현재 증상 <span class="q-sub">(다중 선택 가능)</span></h3>
+                            </div>
+                            <div class="chip-group" id="q-symptoms">
+                                <div class="chip" onclick="toggleChip('symptoms', '곰팡이', true, this)">까만 곰팡이</div>
+                                <div class="chip" onclick="toggleChip('symptoms', '물기/결로', true, this)">물방울/결로</div>
+                                <div class="chip" onclick="toggleChip('symptoms', '냄새', true, this)">퀴퀴한 냄새</div>
+                                <div class="chip" onclick="toggleChip('symptoms', '벽지 들뜸', true, this)">벽지 젖음/들뜸</div>
+                                <div class="chip" onclick="toggleChip('symptoms', '자재 변형', true, this)">마루/자재 변형</div>
+                                <div class="chip" onclick="toggleChip('symptoms', '누수 의심', true, this)">누수 의심</div>
+                                <div class="chip" onclick="toggleChip('symptoms', '단순 교체', true, this)">단순 노후 교체</div>
+                            </div>
+                        </div>
+
+                        <!-- 6. 사진 업로드 영역 -->
+                        <div class="q-card">
+                            <div class="q-header">
+                                <span class="q-num">6</span>
+                                <h3>현장 사진 업로드</h3>
+                            </div>
+                            <div class="photo-upload-box" onclick="alert('사진 앨범을 엽니다. (UI 데모)')">
+                                <i class="fa-solid fa-camera"></i>
+                                <p>여기를 눌러 사진을 첨부하세요</p>
+                                <span class="photo-tip">※ 사진을 올리면 AI가 더 정확한 원인을 분석해 드립니다!</span>
+                            </div>
+                        </div>
+
+                        <!-- 7. 셀프 시공 경험 (단일 선택) -->
+                        <div class="q-card">
+                            <div class="q-header">
+                                <span class="q-num">7</span>
+                                <h3>나의 셀프 시공 경험</h3>
+                            </div>
+                            <div class="chip-group" id="q-experience">
+                                <div class="chip" onclick="toggleChip('experience', '처음', false, this)">전혀 없음 (처음)</div>
+                                <div class="chip" onclick="toggleChip('experience', '조금 해봄', false, this)">간단한 보수 경험 있음</div>
+                                <div class="chip" onclick="toggleChip('experience', '어느 정도 가능', false, this)">어느 정도 할 줄 암</div>
+                                <div class="chip" onclick="toggleChip('experience', '경험 많음', false, this)">경험 많음 (고수)</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 하단 고정: 예산 입력 단계로 이동 버튼 -->
+                    <div class="bottom-action-bar">
+                        <button id="btn-to-budget" class="btn btn-primary btn-large disabled" onclick="goToBudgetStep()">
+                            <span>예산 및 계획 설정하기</span>
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </section>
+
+                <!-- 뷰: 예산 및 계획 설정 화면 (MVP 4단계) -->
+                <section id="view-budget" class="view-section">
+                    <div class="header-section" style="padding-bottom: 10px;">
+                        <h2>예산과 목표를<br>알려주세요</h2>
+                        <p>부담 없는 선에서 솔직하게 선택해 주세요.</p>
+                    </div>
+
+                    <div class="question-list">
+                        <!-- 1. 예산 범위 (단일 선택) -->
+                        <div class="q-card">
+                            <div class="q-header">
+                                <span class="q-num"><i class="fa-solid fa-wallet"></i></span>
+                                <h3>예산 범위</h3>
+                            </div>
+                            <div class="chip-group grid-2col" id="q-budget">
+                                <div class="chip block-chip" onclick="toggleBudgetChip('budget', '10만원 이하', this)">10만원 이하</div>
+                                <div class="chip block-chip" onclick="toggleBudgetChip('budget', '10~30만원', this)">10~30만원</div>
+                                <div class="chip block-chip" onclick="toggleBudgetChip('budget', '30~50만원', this)">30~50만원</div>
+                                <div class="chip block-chip" onclick="toggleBudgetChip('budget', '50~100만원', this)">50~100만원</div>
+                                <div class="chip block-chip" onclick="toggleBudgetChip('budget', '100~300만원', this)">100~300만원</div>
+                                <div class="chip block-chip" onclick="toggleBudgetChip('budget', '300만원 이상', this)">300만원 이상</div>
+                                <div class="chip block-chip full-width-chip" onclick="toggleBudgetChip('budget', '아직 모르겠음', this)">아직 모르겠음</div>
+                            </div>
+                        </div>
+
+                        <!-- 2. 원하는 방향 (단일 또는 다중 선택, 여기선 다중 허용으로 유연하게) -->
+                        <div class="q-card">
+                            <div class="q-header">
+                                <span class="q-num"><i class="fa-solid fa-bullseye"></i></span>
+                                <h3>원하는 시공 방향 <span class="q-sub">(다중 선택 가능)</span></h3>
+                            </div>
+                            <div class="chip-group" id="q-priority">
+                                <div class="chip" onclick="toggleBudgetChip('priority', '최소 비용', true, this)">최소 비용</div>
+                                <div class="chip" onclick="toggleBudgetChip('priority', '가성비', true, this)">가성비</div>
+                                <div class="chip" onclick="toggleBudgetChip('priority', '오래가는 방식', true, this)">오래가는 방식</div>
+                                <div class="chip" onclick="toggleBudgetChip('priority', '전문가 수준', true, this)">전문가 수준</div>
+                                <div class="chip" onclick="toggleBudgetChip('priority', '임시 해결', true, this)">임시 해결</div>
+                                <div class="chip" onclick="toggleBudgetChip('priority', '원인까지 해결', true, this)">원인까지 해결</div>
+                            </div>
+                        </div>
+
+                        <!-- 3. 셀프 진행 의향 (단일 선택) -->
+                        <div class="q-card">
+                            <div class="q-header">
+                                <span class="q-num"><i class="fa-solid fa-person-digging"></i></span>
+                                <h3>셀프 진행 의향</h3>
+                            </div>
+                            <div class="chip-group flex-col" id="q-selfLevel">
+                                <div class="chip block-chip text-left" onclick="toggleBudgetChip('selfLevel', '직접 하고 싶음', false, this)">직접 하고 싶음</div>
+                                <div class="chip block-chip text-left" onclick="toggleBudgetChip('selfLevel', '일부만 직접 하고 싶음', false, this)">일부만 직접 하고 싶음</div>
+                                <div class="chip block-chip text-left" onclick="toggleBudgetChip('selfLevel', '전문가 상담 후 결정', false, this)">전문가 상담 후 결정</div>
+                                <div class="chip block-chip text-left" onclick="toggleBudgetChip('selfLevel', '전문가에게 맡기고 싶음', false, this)">전문가에게 맡기고 싶음</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 하단 고정: 분석 시작 버튼 -->
+                    <div class="bottom-action-bar">
+                        <button id="btn-analyze" class="btn btn-primary btn-large disabled" onclick="startAnalysis()">
+                            <span>AI 분석 결과 보기</span>
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        </button>
+                    </div>
+                </section>
+
+                <!-- 뷰: 분석 결과 리포트 화면 (MVP 5단계) -->
+                <section id="view-analysis" class="view-section">
+                    <div class="header-section" style="padding-bottom: 10px;">
+                        <h2><i class="fa-solid fa-file-signature"></i> 진단 리포트</h2>
+                        <p>입력하신 정보를 바탕으로 분석된 현장 결과입니다.</p>
+                    </div>
+
+                    <div class="report-container">
+                        <!-- 1. 요약 카드 -->
+                        <div class="report-card summary-card">
+                            <h3 class="card-title">기본 진단 요약</h3>
+                            <ul class="summary-list">
+                                <li><span class="label">해결 목적</span> <span class="value" id="res-problem">-</span></li>
+                                <li><span class="label">시공 공간</span> <span class="value" id="res-space">-</span></li>
+                                <li><span class="label">설정 예산</span> <span class="value" id="res-budget">-</span></li>
+                                <li><span class="label">셀프 가능성</span> <span class="value" id="res-self">-</span></li>
+                            </ul>
+                        </div>
+
+                        <!-- 2. 위험도 분석 -->
+                        <div class="report-card">
+                            <h3 class="card-title">종합 위험도 평가</h3>
+                            <div class="risk-list">
+                                <div class="risk-item">
+                                    <span>결로 위험도</span>
+                                    <span class="badge" id="risk-condensation">-</span>
+                                </div>
+                                <div class="risk-item">
+                                    <span>누수 의심도</span>
+                                    <span class="badge" id="risk-leak">-</span>
+                                </div>
+                                <div class="risk-item">
+                                    <span>재발 위험도</span>
+                                    <span class="badge" id="risk-recurrence">-</span>
+                                </div>
+                                <div class="risk-item">
+                                    <span>셀프 난이도</span>
+                                    <span class="badge" id="risk-difficulty">-</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 4. 경고 메시지 (조건부 노출) -->
+                        <div class="report-card warning-card" id="warning-container" style="display:none;">
+                            <h3 class="card-title text-danger"><i class="fa-solid fa-triangle-exclamation"></i> 현장 특이사항 경고</h3>
+                            <ul class="warning-list" id="warning-list">
+                                <!-- JS에서 동적 삽입 -->
+                            </ul>
+                        </div>
+
+                        <!-- 3. 추천 해결 방향 -->
+                        <div class="report-card">
+                            <h3 class="card-title"><i class="fa-solid fa-lightbulb"></i> 추천 해결 방향</h3>
+                            <div class="recommendation-text" id="recommendation-text">
+                                <!-- JS에서 동적 삽입 -->
+                            </div>
+                        </div>
+                        
+                        <!-- MVP 15단계: 수익화 코칭 강조 배너 -->
+                        <div id="analysis-monetize-cta" style="margin-top: 20px;"></div>
+                    </div>
+
+                    <!-- 하단 고정: 다음 단계 액션 버튼들 -->
+                    <div class="bottom-action-bar" style="display: flex; gap: 8px;">
+                        <button class="btn btn-secondary btn-large" style="flex:1; padding:16px 10px;" onclick="navigate('chat')">
+                            <i class="fa-solid fa-user-tie"></i> 전문가 코칭
+                        </button>
+                        <button class="btn btn-primary btn-large" style="flex:2; padding:16px 10px;" onclick="goToProcessStep()">
+                            <span>추천 공정 보기</span>
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </section>
+
+                <!-- 뷰: 맞춤 추천 공정 타임라인 화면 (MVP 6단계) -->
+                <section id="view-process" class="view-section">
+                    <div class="header-section" style="padding-bottom: 10px;">
+                        <h2><i class="fa-solid fa-list-check"></i> 맞춤 시공 순서</h2>
+                        <p>진단 결과에 맞춘 필수 공정 타임라인입니다.</p>
+                    </div>
+
+                    <div class="timeline-wrapper" id="process-timeline-container">
+                        <!-- JS에서 동적으로 공정 타임라인 아이템들이 생성됩니다. -->
+                    </div>
+
+                    <!-- 하단 고정: 계산기 모드 버튼 -->
+                    <div class="bottom-action-bar">
+                        <button class="btn btn-primary btn-large" onclick="goToCalculatorStep()">
+                            <span>자재 수량 계산하기</span>
+                            <i class="fa-solid fa-calculator"></i>
+                        </button>
+                    </div>
+                </section>
+
+                <!-- 뷰: 자재 수량 계산기 화면 (MVP 7단계) -->
+                <section id="view-calculator" class="view-section">
+                    <div class="header-section" style="padding-bottom: 10px;">
+                        <h2><i class="fa-solid fa-calculator"></i> 자재 수량 계산기</h2>
+                        <p>시공할 면적을 입력하시면 로스율(손실률)을 반영한 정확한 필요 수량을 계산해 드립니다.</p>
+                    </div>
+
+                    <div class="question-list">
+                        <div class="q-card">
+                            <h3 class="card-title" style="margin-bottom: 12px;">1. 벽면 면적 입력</h3>
+                            <div id="wall-inputs" style="display:flex; flex-direction:column; gap:8px; margin-bottom: 12px;">
+                                <div class="dimension-row">
+                                    <input type="number" placeholder="가로(m)" class="input-field wall-w">
+                                    <span>×</span>
+                                    <input type="number" placeholder="세로(m)" class="input-field wall-h">
+                                </div>
+                            </div>
+                            <button class="btn btn-secondary btn-small" style="width:100%; padding: 8px;" onclick="addWallInput()">+ 벽면 추가하기</button>
+                            
+                            <hr style="border:0; border-top:1px dashed var(--border-color); margin: 20px 0;">
+
+                            <h3 class="card-title" style="margin-bottom: 12px;">2. 바닥 면적 입력</h3>
+                            <div class="dimension-row">
+                                <input type="number" placeholder="가로(m)" class="input-field" id="floor-w">
+                                <span>×</span>
+                                <input type="number" placeholder="세로(m)" class="input-field" id="floor-h">
+                            </div>
+
+                            <hr style="border:0; border-top:1px dashed var(--border-color); margin: 20px 0;">
+
+                            <h3 class="card-title" style="margin-bottom: 12px;">3. 계산할 자재 선택</h3>
+                            <select id="calc-material" class="select-field">
+                                <option value="insulation">단열재 (이보드 900×2400)</option>
+                                <option value="gypsum">석고보드 (900×1800)</option>
+                                <option value="wallpaper">도배지 (실크 폭 106cm)</option>
+                                <option value="paint">페인트 (수성)</option>
+                                <option value="floor">장판 (폭 183cm)</option>
+                                <option value="decotile">데코타일 (1박스=1평)</option>
+                                <option value="silicone">바이오 실리콘</option>
+                                <option value="remover">곰팡이 제거제</option>
+                            </select>
+
+                            <button class="btn btn-primary" style="width:100%; margin-top:20px;" onclick="calculateMaterials()">수량 계산하기</button>
+                        </div>
+
+                        <!-- 계산 결과 영역 -->
+                        <div id="calc-result-container" class="q-card" style="display:none;">
+                            <h3 class="card-title" style="color:var(--primary);"><i class="fa-solid fa-square-check"></i> 계산 결과</h3>
+                            <div class="calc-result-box" style="text-align:center; padding: 20px 0;">
+                                <div id="res-material-qty" style="font-size: 2rem; font-weight: 800; color: var(--text-main); margin-bottom: 8px;">0 개</div>
+                                <div style="font-size: 0.85rem; color: var(--text-sub);">
+                                    <p>적용된 손실률: <span id="res-loss-rate" style="font-weight:bold; color:var(--primary);">10%</span> (내 경험치 기준)</p>
+                                    <p>순수 시공 면적: <span id="res-net-area" style="font-weight:bold;">0</span> ㎡</p>
+                                </div>
+                            </div>
+                            <div class="why-box" style="background-color:#F7FAFC; padding:16px; border-radius:8px; margin-top:10px;">
+                                <h4 style="font-size:0.9rem; font-weight:700; color:var(--text-main); margin-bottom:6px;">
+                                    <i class="fa-solid fa-circle-info" style="color:var(--primary);"></i> 왜 이 수량이 필요한가요?
+                                </h4>
+                                <p id="res-why-desc" style="font-size:0.85rem; color:var(--text-sub); line-height:1.5;"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 하단 고정: 비용 계산기로 이동 버튼 -->
+                    <div class="bottom-action-bar">
+                        <button class="btn btn-primary btn-large" onclick="goToEstimateStep()">
+                            <span>예상 총 비용 산출하기</span>
+                            <i class="fa-solid fa-won-sign"></i>
+                        </button>
+                    </div>
+                </section>
+
+                <!-- 뷰: 예상 비용 계산기 화면 (MVP 8단계) -->
+                <section id="view-estimate" class="view-section">
+                    <div class="header-section" style="padding-bottom: 10px;">
+                        <h2><i class="fa-solid fa-receipt"></i> 전체 예상 비용</h2>
+                        <p>계산된 자재 수량에 단가를 적용하여 예산과 비교합니다.</p>
+                    </div>
+
+                    <div class="q-card">
+                        <h3 class="card-title" style="margin-bottom: 8px;">자재 및 공구 비용</h3>
+                        <p style="font-size:0.8rem; color:var(--text-sub); margin-bottom: 16px;">단가는 시장가 기준이며, 직접 수정하실 수 있습니다.</p>
+                        
+                        <div id="estimate-list" class="estimate-list">
+                            <!-- JS에서 동적 리스트 삽입 -->
+                        </div>
+
+                        <hr style="border:0; border-top:1px dashed var(--border-color); margin: 16px 0;">
+
+                        <!-- 고정 항목: 공구비, 배송비 -->
+                        <div class="estimate-fixed-items">
+                            <div class="estimate-row">
+                                <div class="est-info">
+                                    <strong>기본 공구비</strong>
+                                    <span class="est-qty">기본 장비 세트</span>
+                                </div>
+                                <div class="est-price">
+                                    <input type="number" id="est-tool-cost" class="input-field" value="30000" oninput="calculateEstimateTotal()">
+                                    <span>원</span>
+                                </div>
+                            </div>
+                            <div class="estimate-row">
+                                <div class="est-info">
+                                    <strong>배송비/기타비용</strong>
+                                    <span class="est-qty">화물 및 택배 등 합산</span>
+                                </div>
+                                <div class="est-price">
+                                    <input type="number" id="est-shipping-cost" class="input-field" value="20000" oninput="calculateEstimateTotal()">
+                                    <span>원</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 총합계 및 예산 비교 카드 -->
+                    <div class="q-card" style="margin-top: 16px; background-color: var(--primary); color: white; border: none;">
+                        <h3 class="card-title" style="color: white; border-bottom: 1px solid rgba(255,255,255,0.3); padding-bottom: 12px; margin-bottom:0;">
+                            최종 예상 비용
+                        </h3>
+                        <div style="font-size: 2.2rem; font-weight: 800; text-align: right; margin: 20px 0;" id="est-total-cost">0 원</div>
+                        
+                        <div class="budget-compare-box" style="background-color: white; color: var(--text-main); padding: 14px; border-radius: var(--radius-sm);">
+                            <div style="font-size: 0.85rem; color: var(--text-sub); margin-bottom: 6px;">나의 설정 예산: <strong id="est-my-budget" style="color: var(--primary-dark);"></strong></div>
+                            <div id="est-budget-msg" style="font-weight: 800; font-size: 1.05rem;">비교 중...</div>
+                        </div>
+                    </div>
+
+                    <!-- 하단 고정: 검증 시스템으로 이동 버튼 -->
+                    <div class="bottom-action-bar">
+                        <button class="btn btn-primary btn-large" onclick="goToValidationStep()">
+                            <span>내 시공 계획 검증받기</span>
+                            <i class="fa-solid fa-shield-halved"></i>
+                        </button>
+                    </div>
+                </section>
+
+                <!-- 뷰: 공정 검증 시스템 (MVP 9단계) -->
+                <section id="view-validation" class="view-section">
+                    <div class="header-section" style="padding-bottom: 10px;">
+                        <h2><i class="fa-solid fa-microscope"></i> 공정 위험도 검증</h2>
+                        <p>생각하고 계신 시공 방법을 선택하시면, 현장 데이터와 대조하여 위험 요소를 찾아냅니다.</p>
+                    </div>
+
+                    <!-- 입력: 내 시공 계획 -->
+                    <div class="q-card" style="margin-bottom: 16px;">
+                        <h3 class="card-title">어떻게 시공하실 계획인가요? <span class="q-sub">(다중 선택)</span></h3>
+                        <p style="font-size:0.8rem; color:var(--text-sub); margin-bottom: 12px;">현장 상태(3단계 입력값)와 결합하여 검증합니다.</p>
+                        
+                        <div class="chip-group" id="q-validationPlan">
+                            <div class="chip block-chip text-left" onclick="toggleValidationChip('곰팡이 약품 제거만 진행', this)">곰팡이 약품 제거만 진행</div>
+                            <div class="chip block-chip text-left" onclick="toggleValidationChip('완전 건조 (하루 이상)', this)">완전 건조 (하루 이상 대기)</div>
+                            <div class="chip block-chip text-left" onclick="toggleValidationChip('단열벽지/폼블럭 등 얇은 단열재 부착', this)">단열벽지/폼블럭 등 얇은 단열재 부착</div>
+                            <div class="chip block-chip text-left" onclick="toggleValidationChip('이보드 등 정석 단열재 부착', this)">이보드 등 두꺼운 정석 단열재 부착</div>
+                            <div class="chip block-chip text-left" onclick="toggleValidationChip('기존 실리콘 위에 그대로 덧방', this)">기존 실리콘 위에 그대로 덧방</div>
+                            <div class="chip block-chip text-left" onclick="toggleValidationChip('바탕면 평탄화/미장 작업', this)">바탕면 평탄화/미장 작업 진행</div>
+                            <div class="chip block-chip text-left" onclick="toggleValidationChip('제거 후 바로 도배/장판 마감', this)">제거 후 바로 도배/장판 마감</div>
+                        </div>
+
+                        <button class="btn btn-primary" style="width:100%; margin-top:20px; background-color: var(--primary-dark);" onclick="runValidation()">
+                            <i class="fa-solid fa-magnifying-glass-chart"></i> 시공 계획 검증하기
+                        </button>
+                    </div>
+
+                    <!-- 검증 결과 카드 (초기 숨김) -->
+                    <div id="validation-result-container" style="display:none;">
+                        <div class="q-card" style="border: 2px solid var(--border-color);" id="val-card-wrapper">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+                                <h3 class="card-title" style="margin:0;"><i class="fa-solid fa-clipboard-check"></i> AI 검증 결과</h3>
+                                <span class="badge" id="val-badge" style="font-size:1rem; padding:6px 12px;">대기중</span>
+                            </div>
+                            
+                            <ul class="warning-list" id="val-warning-list" style="margin-bottom: 16px;">
+                                <!-- 동적 경고 메시지 삽입 -->
+                            </ul>
+
+                            <div style="background-color: #F0FFF4; padding: 14px; border-radius: 8px; border-left: 4px solid #38A169;">
+                                <h4 style="font-size:0.9rem; font-weight:700; color:#276749; margin-bottom:6px;">💡 올바른 추천 공정</h4>
+                                <p id="val-reco-text" style="font-size:0.85rem; color:#2F855A; line-height:1.5;">분석 중...</p>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 16px;">
+                            <button class="btn btn-secondary btn-large" style="width:100%;" onclick="navigate('coaching')">
+                                <i class="fa-solid fa-user-tie"></i> 위험 요소에 대해 전문가 코칭 받기
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 하단 고정: 실행 모드 이동 버튼 -->
+                    <div class="bottom-action-bar">
+                        <button class="btn btn-primary btn-large" onclick="goToExecutionStep()">
+                            <span>시공 실행 모드 시작하기</span>
+                            <i class="fa-solid fa-person-digging"></i>
+                        </button>
+                    </div>
+                </section>
+
+                <!-- 뷰: 실행 모드 화면 (MVP 10단계) -->
+                <section id="view-execution" class="view-section" style="padding-bottom: 80px;">
+                    <div class="header-section" style="padding-bottom: 10px;">
+                        <h2><i class="fa-solid fa-helmet-safety"></i> 현장 실행 모드</h2>
+                        <p>작업 현장에서 단계를 하나씩 체크하며 안전하게 시공을 진행하세요.</p>
+                    </div>
+
+                    <!-- 진행률 바 -->
+                    <div class="q-card" style="margin-bottom: 16px; padding: 16px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;">
+                            <h3 class="card-title" style="margin:0;"><i class="fa-solid fa-bars-progress"></i> 전체 진행률</h3>
+                            <span id="exec-progress-text" style="font-size:1.2rem; font-weight:800; color:var(--primary);">0%</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div id="exec-progress-fill" class="progress-bar-fill"></div>
+                        </div>
+                    </div>
+
+                    <!-- 오늘 할 일 하이라이트 -->
+                    <div class="q-card" style="background-color:var(--primary); color:white; margin-bottom:16px; border:none; padding:16px;">
+                        <h3 style="font-size:0.85rem; font-weight:600; margin-bottom:8px; opacity:0.9;">👉 지금 당장 해야 할 작업</h3>
+                        <h2 id="exec-today-task" style="font-size:1.4rem; font-weight:800; line-height:1.4;">대기 중...</h2>
+                    </div>
+
+                    <!-- 전체 공정 리스트 컨테이너 -->
+                    <div id="exec-list-container" style="display:flex; flex-direction:column; gap:16px;">
+                        <!-- JS에서 동적 생성 -->
+                    </div>
+
+                    <!-- MVP 15단계: 셀프 시공 교육 수강 배너 CTA -->
+                    <div class="banner-ad" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color:white; padding:15px; border-radius:8px; margin-top:24px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="alert('결제 연동 예정: 셀프 시공 기초 VOD 수강권 구매 화면으로 이동')">
+                        <div>
+                            <h4 style="margin:0; font-size:1.05rem;">🚨 혼자 하기 막막하신가요?</h4>
+                            <p style="margin:4px 0 0 0; font-size:0.85rem;">[단독] 셀프 인테리어 기초~심화 VOD 50% 할인</p>
+                        </div>
+                        <i class="fa-solid fa-chevron-right" style="font-size:1.2rem;"></i>
+                    </div>
+                </section>
+
+                <!-- 뷰: 전문가 코칭 신청 화면 (MVP 11단계) -->
+                <section id="view-coaching" class="view-section" style="padding-bottom: 120px;">
+                    <div class="header-section" style="padding-bottom: 10px;">
+                        <h2><i class="fa-solid fa-user-tie"></i> 전문가 코칭 신청</h2>
+                        <p>진행 중 막히는 부분이 있나요? 검증된 전문가가 현장 맞춤형 해결책을 제시해 드립니다.</p>
+                    </div>
+
+                    <div class="q-card" style="margin-bottom: 16px;">
+                        <h3 class="card-title">1. 코칭 상품 선택</h3>
+                        <div class="coaching-products">
+                            <label class="coach-card">
+                                <input type="radio" name="coach_type" value="photo" onchange="updateCoachingPrice(9900)" checked>
+                                <div class="coach-content">
+                                    <h4>📸 사진 검토 코칭</h4>
+                                    <p>사진 3~5장과 질문을 남기면 서면 피드백 제공</p>
+                                    <div class="coach-price">9,900 원</div>
+                                </div>
+                            </label>
+                            <label class="coach-card">
+                                <input type="radio" name="coach_type" value="video" onchange="updateCoachingPrice(29000)">
+                                <div class="coach-content">
+                                    <h4>🎥 20분 화상 코칭</h4>
+                                    <p>현재 상태 실시간 점검 및 공정 방향 상세 상담</p>
+                                    <div class="coach-price">29,000 원</div>
+                                </div>
+                            </label>
+                            <label class="coach-card">
+                                <input type="radio" name="coach_type" value="report" onchange="updateCoachingPrice(49000)">
+                                <div class="coach-content">
+                                    <h4>📝 공정 검토 리포트</h4>
+                                    <p>내가 짠 공정과 자재 완벽 검토, 위험 요소 수정안 제시</p>
+                                    <div class="coach-price">49,000 원</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="q-card" style="margin-bottom: 16px;">
+                        <h3 class="card-title">2. 현장 상황 설명</h3>
+                        
+                        <p style="font-size:0.85rem; font-weight:600; margin:12px 0 6px;">사진 업로드 (최대 5장)</p>
+                        <div class="exec-photo-area" onclick="document.getElementById('coach-photo-input').click()">
+                            <i class="fa-solid fa-cloud-arrow-up"></i> 앨범에서 문제 사진 선택
+                            <input type="file" id="coach-photo-input" accept="image/*" multiple style="display:none;" onchange="handleCoachPhotoUpload(this)">
+                            <div id="coach-photo-preview" style="margin-top:8px; font-size:0.8rem; color:var(--primary);">선택된 사진 없음</div>
+                        </div>
+
+                        <p style="font-size:0.85rem; font-weight:600; margin:16px 0 6px;">궁금한 점 작성</p>
+                        <textarea id="coach-question" class="exec-memo-input" style="min-height: 100px;" placeholder="전문가에게 물어보고 싶은 내용을 최대한 자세히 적어주세요."></textarea>
+                    </div>
+
+                    <div class="q-card" style="margin-bottom: 16px;">
+                        <h3 class="card-title">3. 연락처 및 상담 방식</h3>
+                        
+                        <p style="font-size:0.85rem; font-weight:600; margin:12px 0 6px;">휴대폰 번호</p>
+                        <input type="tel" id="coach-phone" class="input-field" style="width:100%;" placeholder="010-0000-0000">
+
+                        <p style="font-size:0.85rem; font-weight:600; margin:16px 0 6px;">희망 연락 방식</p>
+                        <select id="coach-contact-method" class="select-field">
+                            <option value="kakao">카카오톡 알림톡</option>
+                            <option value="call">음성 통화 (전화)</option>
+                            <option value="video">화상 통화 링크 (줌/구글밋)</option>
+                        </select>
+                    </div>
+
+                    <!-- 하단 고정: 결제 및 신청 버튼 -->
+                    <div class="bottom-action-bar" style="display:flex; flex-direction:column; gap:12px; border-top: 1px solid var(--border-color); box-shadow: 0 -4px 12px rgba(0,0,0,0.05);">
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding: 0 4px;">
+                            <span style="font-size:0.95rem; font-weight:600; color:var(--text-main);">결제 예정 금액</span>
+                            <strong id="coach-total-price" style="font-size:1.4rem; color:var(--primary-dark);">9,900 원</strong>
+                        </div>
+                        <button class="btn btn-primary btn-large" style="width:100%;" onclick="submitCoachingRequest()">
+                            <span>코칭 신청하기 (결제 없음)</span>
+                        </button>
+                    </div>
+                </section>
+
+                <!-- 뷰: 필요 서류 제공 화면 (MVP 12단계) -->
+                <section id="view-document" class="view-section" style="padding-bottom: 80px;">
+                    <div class="header-section" style="padding-bottom: 10px;">
+                        <h2><i class="fa-solid fa-file-pdf"></i> 필요 서류 제공</h2>
+                        <p>그동안 입력하신 데이터를 모아 클릭 한 번으로 문서와 리포트를 생성합니다.</p>
+                    </div>
+
+                    <div class="q-card" style="margin-bottom: 16px;">
+                        <h3 class="card-title">출력할 서류 종류 선택</h3>
+                        <div style="display:flex; flex-direction:column; gap:10px; margin-top:12px;">
+                            <button class="btn btn-secondary" onclick="renderDocumentPreview('plan')" style="justify-content:flex-start; text-align:left;">
+                                <i class="fa-solid fa-clipboard-list" style="width:24px;"></i> 1. 셀프 시공 총괄 계획서
+                            </button>
+                            <button class="btn btn-secondary" onclick="renderDocumentPreview('materials')" style="justify-content:flex-start; text-align:left;">
+                                <i class="fa-solid fa-cart-shopping" style="width:24px;"></i> 2. 자재 구매 리스트
+                            </button>
+                            <button class="btn btn-secondary" onclick="renderDocumentPreview('estimate')" style="justify-content:flex-start; text-align:left;">
+                                <i class="fa-solid fa-file-invoice-dollar" style="width:24px;"></i> 3. 예상 견적서
+                            </button>
+                            <button class="btn btn-secondary" onclick="renderDocumentPreview('checklist')" style="justify-content:flex-start; text-align:left;">
+                                <i class="fa-solid fa-check-double" style="width:24px;"></i> 4. 공정 & 하자 예방 체크리스트
+                            </button>
+                            <button class="btn btn-secondary" onclick="renderDocumentPreview('expert')" style="justify-content:flex-start; text-align:left;">
+                                <i class="fa-solid fa-envelope-open-text" style="width:24px;"></i> 5. 전문가 검토 요청서
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 문서 미리보기 영역 -->
+                    <div id="doc-preview-wrapper" style="display:none; margin-top: 24px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
+                            <h3 style="font-size:1.1rem; font-weight:700;"><i class="fa-regular fa-file-lines"></i> 문서 미리보기</h3>
+                            <button class="btn btn-primary btn-small" onclick="window.print()">
+                                <i class="fa-solid fa-print"></i> PDF 저장 / 인쇄
+                            </button>
+                        </div>
+                        
+                        <div id="print-area" class="print-document" style="background-color:white; padding:24px; border:1px solid #ddd; border-radius:4px; box-shadow:0 2px 8px rgba(0,0,0,0.05); min-height:400px; color:black; font-family: 'Malgun Gothic', sans-serif;">
+                            <!-- JS에서 문서 내용 동적 생성 -->
+                        </div>
+                        
+                        <!-- MVP 15단계: 프리미엄 리포트 다운로드 CTA -->
+                        <button class="btn btn-primary btn-large" style="width:100%; margin-top:20px; background-color:#2b6cb0;" onclick="alert('결제 연동 예정: 프리미엄 PDF 리포트 고화질 다운로드 (1,900원 결제)')">
+                            <i class="fa-solid fa-file-pdf"></i> 프리미엄 PDF 리포트로 평생 소장하기 (1,900원)
+                        </button>
+                    </div>
+                </section>
+
+                <!-- 뷰: 내 프로젝트 목록 (MVP 13단계) -->
+                <section id="view-projects" class="view-section">
+                    <div class="header-section">
+                        <button class="back-btn" onclick="navigate('home')"><i class="fa-solid fa-arrow-left"></i></button>
+                        <h2>내 프로젝트</h2>
+                    </div>
+                    
+                    <div class="q-card" style="display:flex; justify-content:space-between; align-items:center;">
+                        <div style="font-size:0.9rem;">현재 진행 중인 프로젝트를 관리하세요.</div>
+                        <button class="btn btn-primary btn-small" onclick="startNewProject()" style="white-space:nowrap;">+ 새 프로젝트</button>
+                    </div>
+
+                    <div id="project-list-container" style="padding-bottom:80px; display:flex; flex-direction:column; gap:12px;">
+                        <!-- JS로 렌더링 -->
+                    </div>
+                </section>
+
+                <!-- 서브 뷰 (기능 개발 대기용 플레이스홀더) -->
+                <section id="view-placeholder" class="view-section">
+                    <div class="placeholder-content">
+                        <i class="fa-solid fa-person-digging"></i>
+                        <h2 id="placeholder-title">준비 중인 기능입니다</h2>
+                        <p>다음 MVP 단계에서 업데이트될 예정입니다.</p>
+                        <button class="btn btn-primary" onclick="navigate('home')">홈으로 돌아가기</button>
+                    </div>
+                </section>
+
+            </main>
+
+            <!-- 하단 네비게이션 탭 -->
+            <nav class="bottom-nav">
+                <button class="nav-item active" onclick="navigate('home')">
+                    <i class="fa-solid fa-house"></i>
+                    <span>홈</span>
+                </button>
+                <button class="nav-item" onclick="navigate('problem')">
+                    <i class="fa-solid fa-list"></i>
+                    <span>공정계획</span>
+                </button>
+                <button class="nav-item" onclick="navigate('budget')">
+                    <i class="fa-solid fa-calculator"></i>
+                    <span>예산계산</span>
+                </button>
+                <button class="nav-item" onclick="navigate('chat')">
+                    <i class="fa-solid fa-comment-dots"></i>
+                    <span>전문가</span>
+                </button>
+            </nav>
+
+        </div>
+    </div>
+
+    <!-- 프로젝트 저장 모달 (MVP 13단계) -->
+    <div id="save-project-modal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+        <div style="background:white; padding:24px; border-radius:12px; width:90%; max-width:400px; color:black;">
+            <h3 style="margin-top:0;">프로젝트 저장</h3>
+            <p style="font-size:0.9rem; color:#666; margin-bottom:15px;">이 프로젝트를 식별할 이름과 현재 상태를 선택해주세요.</p>
+            <input type="text" id="project-name-input" class="input-field" placeholder="예: 안방 결로 해결 공사" style="margin-bottom:15px; width:100%; box-sizing:border-box;">
+            <select id="project-status-input" class="input-field" style="margin-bottom:20px; width:100%; box-sizing:border-box;">
+                <option value="계획 중">계획 중</option>
+                <option value="자재 준비 중">자재 준비 중</option>
+                <option value="진행 중">진행 중</option>
+                <option value="검증 필요">검증 필요</option>
+                <option value="완료">완료</option>
+            </select>
+            <div style="display:flex; gap:10px;">
+                <button class="btn btn-secondary" style="flex:1;" onclick="closeSaveModal()">취소</button>
+                <button class="btn btn-primary" style="flex:1;" onclick="confirmSaveProject()">저장하기</button>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module" src="app.js"></script>
+</body>
+</html>

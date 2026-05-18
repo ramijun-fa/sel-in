@@ -1,0 +1,6 @@
+# 배포 제외 파일 목록
+node_modules
+dist
+.env
+.env.local
+.env.*.local
