@@ -589,7 +589,8 @@
                             
                             <hr style="border:0; border-top:1px dashed var(--border-color); margin: 20px 0;">
 
-                            <h3 class="card-title" style="margin-bottom: 12px;">2. 바닥 면적 입력</h3>
+                            <h3 class="card-title" style="margin-bottom: 4px;">2. 바닥 면적 입력 <span class="q-sub">(선택 사항)</span></h3>
+                            <p style="font-size:0.75rem; color:var(--text-sub); margin-bottom:12px;">바닥재(장판, 데코타일 등) 시공을 계산할 때만 입력하시면 됩니다.</p>
                             <div class="dimension-row">
                                 <input type="number" placeholder="가로(m)" class="input-field" id="floor-w">
                                 <span>×</span>
@@ -598,36 +599,54 @@
 
                             <hr style="border:0; border-top:1px dashed var(--border-color); margin: 20px 0;">
 
-                            <h3 class="card-title" style="margin-bottom: 12px;">3. 계산할 자재 선택</h3>
-                            <select id="calc-material" class="select-field">
-                                <option value="insulation">단열재 (이보드 900×2400)</option>
-                                <option value="gypsum">석고보드 (900×1800)</option>
-                                <option value="wallpaper">도배지 (실크 폭 106cm)</option>
-                                <option value="paint">페인트 (수성)</option>
-                                <option value="floor">장판 (폭 183cm)</option>
-                                <option value="decotile">데코타일 (1박스=1평)</option>
-                                <option value="silicone">바이오 실리콘</option>
-                                <option value="remover">곰팡이 제거제</option>
-                            </select>
+                            <h3 class="card-title" style="margin-bottom: 4px;">3. 계산할 자재 선택 <span class="q-sub">(복수 선택 가능)</span></h3>
+                            <p style="font-size:0.75rem; color:var(--text-sub); margin-bottom:12px;">필요한 자재들을 탭하여 모두 선택하세요.</p>
+                            
+                            <div class="chip-group" id="calculator-material-chips" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
+                                <div class="chip" data-value="insulation" onclick="toggleCalculatorMaterialChip('insulation', this)">단열재 (이보드)</div>
+                                <div class="chip" data-value="gypsum" onclick="toggleCalculatorMaterialChip('gypsum', this)">석고보드 (900×1800)</div>
+                                <div class="chip" data-value="wallpaper" onclick="toggleCalculatorMaterialChip('wallpaper', this)">도배지 (실크)</div>
+                                <div class="chip" data-value="paint" onclick="toggleCalculatorMaterialChip('paint', this)">페인트 (수성)</div>
+                                <div class="chip" data-value="mold_paint" onclick="toggleCalculatorMaterialChip('mold_paint', this)">항균 페인트</div>
+                                <div class="chip" data-value="primer" onclick="toggleCalculatorMaterialChip('primer', this)">젯소/프라이머</div>
+                                <div class="chip" data-value="putty" onclick="toggleCalculatorMaterialChip('putty', this)">핸디코트/퍼티</div>
+                                <div class="chip" data-value="waterproof" onclick="toggleCalculatorMaterialChip('waterproof', this)">침투성 방수제</div>
+                                <div class="chip" data-value="foam_bond" onclick="toggleCalculatorMaterialChip('foam_bond', this)">우레탄 폼본드</div>
+                                <div class="chip" data-value="floor" onclick="toggleCalculatorMaterialChip('floor', this)">장판 (폭 183cm)</div>
+                                <div class="chip" data-value="decotile" onclick="toggleCalculatorMaterialChip('decotile', this)">데코타일</div>
+                                <div class="chip" data-value="silicone" onclick="toggleCalculatorMaterialChip('silicone', this)">바이오 실리콘</div>
+                                <div class="chip" data-value="remover" onclick="toggleCalculatorMaterialChip('remover', this)">곰팡이 제거제</div>
+                                <div class="chip" data-value="custom" onclick="toggleCalculatorMaterialChip('custom', this)" style="border: 1px dashed var(--primary); color: var(--primary);">기타 (직접입력)</div>
+                            </div>
 
-                            <button class="btn btn-primary" style="width:100%; margin-top:20px;" onclick="calculateMaterials()">수량 계산하기</button>
-                        </div>
-
-                        <!-- 계산 결과 영역 -->
-                        <div id="calc-result-container" class="q-card" style="display:none;">
-                            <h3 class="card-title" style="color:var(--primary);"><i class="fa-solid fa-square-check"></i> 계산 결과</h3>
-                            <div class="calc-result-box" style="text-align:center; padding: 20px 0;">
-                                <div id="res-material-qty" style="font-size: 2rem; font-weight: 800; color: var(--text-main); margin-bottom: 8px;">0 개</div>
-                                <div style="font-size: 0.85rem; color: var(--text-sub);">
-                                    <p>적용된 손실률: <span id="res-loss-rate" style="font-weight:bold; color:var(--primary);">10%</span> (내 경험치 기준)</p>
-                                    <p>순수 시공 면적: <span id="res-net-area" style="font-weight:bold;">0</span> ㎡</p>
+                            <!-- 기타 직접 입력 폼 -->
+                            <div id="custom-material-form" style="display:none; background:#f7fafc; padding:16px; border-radius:12px; border:1px dashed #cbd5e0; margin-top:12px; margin-bottom:12px;">
+                                <h4 style="font-size:0.85rem; font-weight:700; color:var(--text-main); margin:0 0 8px 0;"><i class="fa-solid fa-pen-to-square" style="color:var(--primary);"></i> 기타 자재 정보 직접 입력</h4>
+                                <div style="display:flex; flex-direction:column; gap:8px;">
+                                    <input type="text" id="custom-material-name" class="input-field" placeholder="자재명 (예: 타일 줄눈제)" style="width:100%; box-sizing:border-box;">
+                                    <div style="display:flex; gap:8px;">
+                                        <input type="number" id="custom-material-coverage" class="input-field" placeholder="1개당 커버 면적(㎡)" style="flex:1; width:50%; box-sizing:border-box;">
+                                        <input type="text" id="custom-material-unit" class="input-field" placeholder="단위 (예: 포, kg)" style="flex:1; width:50%; box-sizing:border-box;">
+                                    </div>
                                 </div>
                             </div>
-                            <div class="why-box" style="background-color:#F7FAFC; padding:16px; border-radius:8px; margin-top:10px;">
-                                <h4 style="font-size:0.9rem; font-weight:700; color:var(--text-main); margin-bottom:6px;">
-                                    <i class="fa-solid fa-circle-info" style="color:var(--primary);"></i> 왜 이 수량이 필요한가요?
-                                </h4>
-                                <p id="res-why-desc" style="font-size:0.85rem; color:var(--text-sub); line-height:1.5;"></p>
+
+                            <button class="btn btn-primary" style="width:100%; margin-top:12px;" onclick="calculateMaterials()">수량 계산하기</button>
+                        </div>
+
+                        <!-- 계산 결과 영역 (복수 카드 리스트 대응) -->
+                        <div id="calc-result-container" class="q-card" style="display:none; border: 2px solid var(--primary-light);">
+                            <h3 class="card-title" style="color:var(--primary); margin-bottom:12px; border:none; padding:0; display:flex; align-items:center; gap:8px;">
+                                <i class="fa-solid fa-square-check"></i> 자재별 소요 수량 계산서
+                            </h3>
+                            <div style="font-size: 0.85rem; color: var(--text-sub); margin-bottom:16px; line-height:1.5;">
+                                <div>적용된 손실률: <span id="res-loss-rate" style="font-weight:bold; color:var(--primary);">10%</span> (내 경험치 기준)</div>
+                                <div>입력된 면적: 벽면 <span id="res-wall-area" style="font-weight:bold; color:var(--text-main);">0</span>㎡ / 바닥 <span id="res-floor-area" style="font-weight:bold; color:var(--text-main);">0</span>㎡</div>
+                            </div>
+                            
+                            <!-- 동적 결과 아이템 리스트 -->
+                            <div id="calc-results-list" style="display:flex; flex-direction:column; gap:12px;">
+                                <!-- JS에서 동적 생성 -->
                             </div>
                         </div>
                     </div>

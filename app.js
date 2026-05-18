@@ -181,6 +181,7 @@ function selectProblem(problemId, element) {
     
     // 상태 저장
     state.selectedProblem = problemId;
+    projectState.selectedProblem = problemId;
     
     // 다음 단계 버튼 활성화
     const nextBtn = document.getElementById('btn-next-step');
@@ -653,8 +654,29 @@ function toggleStepCheck(checkboxEle, itemId) {
 }
 
 // ==========================================
-// MVP 7단계: 자재 수량 계산기 로직
-// ==========================================
+// 전역 선택된 계산기 자재 목록 보관
+let selectedCalculatorMaterials = [];
+
+function toggleCalculatorMaterialChip(materialType, element) {
+    const index = selectedCalculatorMaterials.indexOf(materialType);
+    if (index > -1) {
+        selectedCalculatorMaterials.splice(index, 1);
+        element.classList.remove('selected');
+    } else {
+        selectedCalculatorMaterials.push(materialType);
+        element.classList.add('selected');
+    }
+    
+    // custom(기타 직접입력) 칩이 켜지거나 꺼질 때 입력 폼 노출 처리
+    const customForm = document.getElementById('custom-material-form');
+    if (customForm) {
+        if (selectedCalculatorMaterials.includes('custom')) {
+            customForm.style.display = 'block';
+        } else {
+            customForm.style.display = 'none';
+        }
+    }
+}
 
 function goToCalculatorStep() {
     navigate('calculator');
@@ -673,8 +695,13 @@ function addWallInput() {
     container.insertAdjacentHTML('beforeend', rowHtml);
 }
 
-// 자재 수량 계산 로직
+// 자재 수량 계산 로직 (다중 계산 및 선택적 면적 검증)
 function calculateMaterials() {
+    if (selectedCalculatorMaterials.length === 0) {
+        alert("계산할 자재를 최소 하나 이상 선택해 주세요.");
+        return;
+    }
+
     // 1. 벽면 면적 합산
     let wallArea = 0;
     const wallWs = document.querySelectorAll('.wall-w');
@@ -690,98 +717,185 @@ function calculateMaterials() {
     const floorH = parseFloat(document.getElementById('floor-h').value) || 0;
     const floorArea = floorW * floorH;
 
-    // 3. 자재 종류 선택
-    const materialType = document.getElementById('calc-material').value;
-
-    // 해당 자재가 주로 쓰이는 면적 판별 (바닥재는 바닥, 나머지는 벽면을 기본으로 함)
-    let netArea = 0;
-    if (['floor', 'decotile'].includes(materialType)) {
-        netArea = floorArea;
-    } else {
-        netArea = wallArea;
-    }
-
-    if (netArea === 0) {
-        alert("먼저 면적(가로, 세로)을 입력해주세요.");
+    // 벽면/바닥 면적 둘 다 없으면 기초 경고
+    if (wallArea === 0 && floorArea === 0) {
+        alert("벽면 면적이나 바닥 면적 중 하나 이상의 시공 면적을 정확히 입력해주세요.");
         return;
     }
 
-    // 4. 로스율(손실률) 설정: 시공 경험 기반
+    // 3. 로스율(손실률) 설정: 시공 경험 기반
     let lossRate = 0.10; // 기본 10%
     if (projectState.experience === '처음') lossRate = 0.15; // 초보 15%
     else if (projectState.experience.includes('경험 많음') || projectState.experience.includes('어느 정도 가능')) lossRate = 0.07; // 숙련자 7%
 
-    const grossArea = netArea * (1 + lossRate);
+    // 기존 계산 내역 클리어
+    projectState.materials = {};
+    const resultsList = document.getElementById('calc-results-list');
+    resultsList.innerHTML = '';
 
-    // 5. 자재별 수량 및 단위 계산
-    let qty = 0;
-    let unit = '';
-    let whyDesc = '';
+    // 4. 자재 정의 데이터 및 각 수량 연산 순회
+    selectedCalculatorMaterials.forEach(materialType => {
+        let isFloorMaterial = ['floor', 'decotile'].includes(materialType);
+        let netArea = isFloorMaterial ? floorArea : wallArea;
+        
+        let qty = 0;
+        let unit = '';
+        let whyDesc = '';
+        let customName = '';
+        let isCalculatable = true;
+        let alertMessage = '';
 
-    switch(materialType) {
-        case 'insulation':
-            // 이보드 900x2400 (1장 = 2.16헤베)
-            qty = Math.ceil(grossArea / 2.16);
-            unit = '장';
-            whyDesc = `이보드 원판 1장(900×2400mm)은 2.16㎡를 덮습니다. 순수 면적에 초보자 실수 및 재단 짜투리를 고려한 손실률 ${Math.round(lossRate*100)}%를 더하여 올림한 수량입니다.`;
-            break;
-        case 'gypsum':
-            // 석고보드 900x1800 (1장 = 1.62헤베)
-            qty = Math.ceil(grossArea / 1.62);
-            unit = '장';
-            whyDesc = `석고보드 1장(900×1800mm)은 약 1.62㎡를 덮습니다. 파손 우려와 컷팅 시 버려지는 부분을 감안하여 산출했습니다.`;
-            break;
-        case 'wallpaper':
-            // 실크벽지 1롤(보통 5평=16.5㎡ 커버)
-            qty = Math.ceil(grossArea / 16.5);
-            unit = '롤';
-            whyDesc = `일반적인 실크벽지 1롤(106cm×15.6m)은 약 5평(16.5㎡)을 도배할 수 있습니다. 무늬 맞춤 로스를 포함하여 보수적으로 넉넉히 잡았습니다.`;
-            break;
-        case 'paint':
-            // 수성 페인트 보통 1리터당 7㎡ (2회 칠 기준 등락 있음)
-            qty = Math.ceil(grossArea / 7);
-            unit = '리터 (L)';
-            whyDesc = `일반 수성페인트는 1리터로 약 6~8㎡(2회 도장 기준)를 칠할 수 있습니다. 롤러에 묻어 버려지는 양까지 계산되었습니다.`;
-            break;
-        case 'floor':
-            // 장판 폭 1.83m 기준 -> 필요한 길이(m)
-            qty = Math.ceil(grossArea / 1.83);
-            unit = '미터 (m)';
-            whyDesc = `표준 장판 폭은 1.83m입니다. 필요한 바닥 면적을 폭으로 나누어 구매해야 할 총 길이를 산출했습니다. 이음매를 겹쳐서 재단하는 여유분이 포함되었습니다.`;
-            break;
-        case 'decotile':
-            // 데코타일 1박스 = 1평(3.3㎡)
-            qty = Math.ceil(grossArea / 3.3);
-            unit = '박스';
-            whyDesc = `데코타일은 1박스에 정확히 1평(3.3㎡) 분량이 들어있습니다. 바닥 모서리 컷팅 시 버려지는 조각을 감안해 올림 처리했습니다.`;
-            break;
-        case 'silicone':
-            // 대략 5㎡당 1개 소요 (둘레/마감용)
-            qty = Math.ceil(netArea / 5);
-            if(qty === 0) qty = 1; // 최소 1개
-            unit = '개';
-            whyDesc = `면적 5㎡당 마감 둘레에 실리콘 1통 정도가 소요됩니다. 넉넉히 쏘고 실수할 때를 대비한 권장 수량입니다.`;
-            break;
-        case 'remover':
-            qty = Math.ceil(netArea / 5);
-            unit = '리터 (L)';
-            whyDesc = `곰팡이 오염 벽면에 약품을 흠뻑 적실 경우 1리터로 보통 5㎡를 커버합니다. 심각한 부위는 2~3회 반복 도포해야 하므로 여유 있게 산출했습니다.`;
-            break;
-    }
+        // 해당 자재 계산을 위한 면적이 0인 경우 방어 처리
+        if (netArea === 0) {
+            isCalculatable = false;
+            alertMessage = isFloorMaterial 
+                ? "바닥 면적 정보가 입력되지 않아 계산할 수 없습니다. 상단에서 바닥 가로/세로를 입력해 주세요."
+                : "벽면 면적 정보가 입력되지 않아 계산할 수 없습니다. 상단에서 벽면 가로/세로를 입력해 주세요.";
+        }
 
-    // 결과 저장 (옵션)
-    projectState.materials[materialType] = { qty, unit, netArea, grossArea, lossRate };
+        const grossArea = netArea * (1 + lossRate);
 
-    // DOM 업데이트 및 표시
-    document.getElementById('res-material-qty').innerText = `${qty} ${unit}`;
-    document.getElementById('res-net-area').innerText = netArea.toFixed(2);
-    document.getElementById('res-gross-area').innerText = grossArea.toFixed(2);
-    document.getElementById('res-loss-rate').innerText = (lossRate * 100).toFixed(0);
-    document.getElementById('res-why-desc').innerText = whyDesc;
+        if (isCalculatable) {
+            switch(materialType) {
+                case 'insulation':
+                    // 이보드 900x2400 (1장 = 2.16헤베)
+                    qty = Math.ceil(grossArea / 2.16);
+                    unit = '장';
+                    whyDesc = `이보드 단열 원판 1장(900×2400mm)은 2.16㎡를 커버합니다. 순수 면적(${netArea.toFixed(2)}㎡)에 사용자의 셀프 레벨별 손실률(${Math.round(lossRate*100)}%)을 합산한 정밀 수량입니다.`;
+                    break;
+                case 'gypsum':
+                    // 석고보드 900x1800 (1장 = 1.62헤베)
+                    qty = Math.ceil(grossArea / 1.62);
+                    unit = '장';
+                    whyDesc = `표준 석고보드 1장(900×1800mm)은 약 1.62㎡를 덮습니다. 파손 우려 및 재단 중 소실되는 면적을 완벽 감안하여 올림 산출했습니다.`;
+                    break;
+                case 'wallpaper':
+                    qty = Math.ceil(grossArea / 16.5);
+                    unit = '롤';
+                    whyDesc = `실크 도배벽지 1롤(106cm×15.6m)은 약 5평(16.5㎡) 면적을 덮을 수 있습니다. 무늬 매칭 여유까지 안전하게 포함되었습니다.`;
+                    break;
+                case 'paint':
+                    qty = Math.ceil(grossArea / 7);
+                    unit = '리터 (L)';
+                    whyDesc = `일반 수성페인트는 1리터로 2회 도장 기준 약 6~8㎡를 도포합니다. 도구에 남거나 날아가는 여유분을 합산했습니다.`;
+                    break;
+                case 'mold_paint':
+                    qty = Math.ceil(grossArea / 6);
+                    unit = '리터 (L)';
+                    whyDesc = `친환경 항균 곰팡이 방지 페인트는 1리터당 약 6㎡(2회 도장 기준)의 커버율을 보입니다. 하자 재발 방지를 위해 표준 두께로 계산된 양입니다.`;
+                    break;
+                case 'primer':
+                    qty = Math.ceil(grossArea / 8);
+                    unit = '리터 (L)';
+                    whyDesc = `젯소(프라이머)는 도장 전 원래 벽의 색상을 숨기고 페인트 접착력을 2배 이상 높여주는 프라이밍재로, 1리터로 약 8㎡ 시공이 가능합니다.`;
+                    break;
+                case 'putty':
+                    qty = Math.ceil(grossArea / 1);
+                    unit = 'kg';
+                    whyDesc = `퍼티(핸디코트)는 벽체의 요철, 타카 핀 자국 및 크랙 부위를 기밀 평탄화하는 바탕 퍼티제로, 1㎡당 평균 1kg 정도가 소요됩니다.`;
+                    break;
+                case 'waterproof':
+                    qty = Math.ceil(grossArea / 4);
+                    unit = '리터 (L)';
+                    whyDesc = `욕실 및 다용도실 크랙과 미세 누수 틈새용 침투성 방수재는 1리터 도포 시 약 4㎡ 공간에 깊게 침투하여 완벽한 방수 피막을 만들어냅니다.`;
+                    break;
+                case 'foam_bond':
+                    qty = Math.ceil(grossArea / 13);
+                    unit = '캔 (can)';
+                    whyDesc = `이보드 단열재 부착용 우레탄 폼본드는 1캔당 이보드 약 6장(약 13㎡ 면적)을 완벽하게 밀착 부착하며 우레탄 충진용으로도 병용 가능합니다.`;
+                    break;
+                case 'floor':
+                    qty = Math.ceil(grossArea / 1.83);
+                    unit = '미터 (m)';
+                    whyDesc = `표준 두께 장판의 유통 폭은 1.83m입니다. 바닥 평면의 중심에서 벽 끝까지 밀어 넣고 겹쳐 재단하는 손실률이 종합 고려된 길이입니다.`;
+                    break;
+                case 'decotile':
+                    qty = Math.ceil(grossArea / 3.3);
+                    unit = '박스';
+                    whyDesc = `데코타일 1박스는 약 1평(3.3㎡)을 커버하도록 규격 포장되어 나옵니다. 꼬리 재단과 모서리 틈새 짜집기용 자투리를 포함한 수량입니다.`;
+                    break;
+                case 'silicone':
+                    qty = Math.ceil(netArea / 5);
+                    if(qty === 0) qty = 1;
+                    unit = '개';
+                    whyDesc = `실리콘은 평균 5㎡ 면적의 테두리 및 틈새 마감에 1통이 사용됩니다. 실리콘 시공이 미숙한 초보자의 실수를 대비한 최소 여유분입니다.`;
+                    break;
+                case 'remover':
+                    qty = Math.ceil(netArea / 5);
+                    unit = '리터 (L)';
+                    whyDesc = `벽 속으로 깊이 번진 곰팡이 뿌리를 뽑기 위해 약품을 침투 제거할 시, 1리터로 약 5㎡ 벽면 공간을 흥건하게 살균 처리할 수 있습니다.`;
+                    break;
+                case 'custom':
+                    const nameInput = document.getElementById('custom-material-name');
+                    const coverageInput = document.getElementById('custom-material-coverage');
+                    const unitInput = document.getElementById('custom-material-unit');
+                    
+                    customName = nameInput ? nameInput.value.trim() : '기타 직접 입력 자재';
+                    if (!customName) customName = '기타 직접 입력 자재';
+
+                    const coverage = coverageInput ? parseFloat(coverageInput.value) : 1;
+                    const finalCoverage = (isNaN(coverage) || coverage <= 0) ? 1 : coverage;
+
+                    const finalUnit = unitInput ? unitInput.value.trim() : '개';
+                    unit = finalUnit ? finalUnit : '개';
+
+                    qty = Math.ceil(grossArea / finalCoverage);
+                    whyDesc = `[기타 직접입력] '${customName}'의 1개당 권장 시공 면적(${finalCoverage}㎡)을 기준으로, 전체 면적에 손실률(${Math.round(lossRate*100)}%)을 가산하여 도출한 커스텀 계산 결과입니다.`;
+                    break;
+            }
+        }
+
+        // 결과 저장 처리
+        if (isCalculatable) {
+            projectState.materials[materialType] = { qty, unit, netArea, grossArea, lossRate, customName };
+        }
+
+        // 동적 UI 카드 렌더링
+        let cardHtml = '';
+        const displayName = materialType === 'custom' ? customName : (basePrices[materialType] ? basePrices[materialType].name : materialType);
+
+        if (isCalculatable) {
+            cardHtml = `
+                <div class="result-item-card" style="background:#FFF9F5; border:1px solid #FFD8A8; border-radius:12px; padding:16px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <strong style="color:var(--text-main); font-size:1.05rem;"><i class="fa-solid fa-layer-group" style="color:var(--primary); margin-right:4px;"></i> ${displayName}</strong>
+                        <span style="font-size:1.35rem; font-weight:800; color:var(--primary-dark);">${qty} ${unit}</span>
+                    </div>
+                    <div style="font-size:0.8rem; color:var(--text-sub); margin-bottom:10px; display:flex; gap:10px;">
+                        <span>순수 시공면적: <strong>${netArea.toFixed(2)}</strong>㎡</span>
+                        <span>로스율 가산면적: <strong>${grossArea.toFixed(2)}</strong>㎡</span>
+                    </div>
+                    <div style="background:white; padding:12px; border-radius:8px; font-size:0.85rem; color:var(--text-sub); line-height:1.5; border:1px solid #FFE8CC;">
+                        <div style="font-weight:700; color:var(--text-main); margin-bottom:4px;"><i class="fa-solid fa-circle-info" style="color:var(--primary);"></i> 산출 근거</div>
+                        ${whyDesc}
+                    </div>
+                </div>
+            `;
+        } else {
+            cardHtml = `
+                <div class="result-item-card" style="background:#FFF5F5; border:1px solid #FEB2B2; border-radius:12px; padding:16px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <strong style="color:#C53030; font-size:1.05rem;"><i class="fa-solid fa-triangle-exclamation" style="margin-right:4px;"></i> ${displayName}</strong>
+                        <span class="badge" style="background:#FEB2B2; color:#C53030; font-weight:bold; font-size:0.75rem;">계산 불가</span>
+                    </div>
+                    <p style="margin:8px 0 0 0; font-size:0.85rem; color:#9B2C2C; line-height:1.45;">
+                        ${alertMessage}
+                    </p>
+                </div>
+            `;
+        }
+
+        resultsList.insertAdjacentHTML('beforeend', cardHtml);
+    });
+
+    // 전체 요약 수치 갱신
+    document.getElementById('res-loss-rate').innerText = (lossRate * 100).toFixed(0) + '%';
+    document.getElementById('res-wall-area').innerText = wallArea.toFixed(2);
+    document.getElementById('res-floor-area').innerText = floorArea.toFixed(2);
 
     document.getElementById('calc-result-container').style.display = 'block';
     
-    // 결과 확인을 위해 살짝 스크롤
+    // 결과 확인을 위해 부드러운 스크롤
     document.getElementById('calc-result-container').scrollIntoView({behavior: 'smooth', block: 'nearest'});
 }
 
@@ -789,16 +903,22 @@ function calculateMaterials() {
 // MVP 8단계: 예상 비용 계산기 로직
 // ==========================================
 
-// 기준 단가 데이터 (시장가 기반 임시 하드코딩)
+// 기준 단가 데이터 (시장가 기반 임시 하드코딩 - 신규 다양한 자재 반영)
 const basePrices = {
     insulation: { name: '단열재 (이보드)', price: 25000 },
     gypsum: { name: '석고보드', price: 4000 },
     wallpaper: { name: '실크 도배지', price: 35000 },
     paint: { name: '수성 페인트', price: 15000 },
+    mold_paint: { name: '항균 페인트', price: 18000 },
+    primer: { name: '젯소/프라이머', price: 14000 },
+    putty: { name: '핸디코트/퍼티', price: 8000 },
+    waterproof: { name: '침투성 방수제', price: 22000 },
+    foam_bond: { name: '우레탄 폼본드', price: 8000 },
     floor: { name: '장판', price: 12000 }, // 미터당
     decotile: { name: '데코타일', price: 45000 },
     silicone: { name: '바이오 실리콘', price: 3000 },
-    remover: { name: '곰팡이 제거제', price: 10000 }
+    remover: { name: '곰팡이 제거제', price: 10000 },
+    custom: { name: '직접 입력 자재', price: 0 }
 };
 
 function goToEstimateStep() {
@@ -820,10 +940,12 @@ function renderEstimateList() {
         const baseItem = basePrices[key];
         if (!baseItem) continue;
 
+        const displayName = key === 'custom' ? data.customName : baseItem.name;
+
         const rowHtml = `
             <div class="estimate-row">
                 <div class="est-info">
-                    <strong>${baseItem.name}</strong>
+                    <strong>${displayName}</strong>
                     <span class="est-qty">필요: ${data.qty} ${data.unit}</span>
                 </div>
                 <div class="est-price">
@@ -1041,7 +1163,10 @@ function renderExecutionList() {
     const listContainer = document.getElementById('exec-list-container');
     listContainer.innerHTML = '';
 
-    const problemKey = projectState.selectedProblem || 'mold';
+    const rawProblemKey = projectState.selectedProblem || state.selectedProblem || 'mold';
+    const problemKey = ['mold', 'condensation', 'insulation'].includes(rawProblemKey) ? 'mold' :
+                       (rawProblemKey === 'bathroom' ? 'bathroom' : 
+                       (rawProblemKey === 'floor' ? 'floor' : 'mold'));
     const steps = processDataMap[problemKey] || processDataMap['mold'];
     
     // 실행 데이터 배열 길이 맞추기
