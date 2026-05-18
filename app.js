@@ -265,15 +265,21 @@ function goToBudgetStep() {
 
 // 예산 화면용 칩 토글 이벤트 처리
 function toggleBudgetChip(category, value, isMulti, element) {
+    // 3개 인자만 넘어온 경우 (isMulti 자리에 element 객체가 들어옴) 대응하는 방어 코드
+    if (element === undefined && isMulti && typeof isMulti === 'object') {
+        element = isMulti;
+        isMulti = false;
+    }
+
     if (isMulti) {
         // 다중 선택 로직
         const index = projectState[category].indexOf(value);
         if (index > -1) {
             projectState[category].splice(index, 1);
-            element.classList.remove('selected');
+            if (element) element.classList.remove('selected');
         } else {
             projectState[category].push(value);
-            element.classList.add('selected');
+            if (element) element.classList.add('selected');
         }
     } else {
         // 단일 선택 로직
@@ -283,7 +289,9 @@ function toggleBudgetChip(category, value, isMulti, element) {
             chips.forEach(c => c.classList.remove('selected'));
         }
         
-        element.classList.add('selected');
+        if (element) {
+            element.classList.add('selected');
+        }
         projectState[category] = value;
     }
     
