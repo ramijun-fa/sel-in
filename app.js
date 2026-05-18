@@ -322,9 +322,40 @@ function startAnalysis() {
     const btn = document.getElementById('btn-analyze');
     if (btn && btn.classList.contains('disabled')) return;
     
-    // 분석 리포트 화면 생성 및 라우팅
-    generateAnalysisReport();
-    navigate('analysis');
+    const modal = document.getElementById('notebooklm-loading-modal');
+    const logsEl = document.getElementById('ai-loading-logs');
+    
+    if (modal && logsEl) {
+        modal.style.display = 'flex';
+        logsEl.innerHTML = '<div style="color:#667eea;"><i class="fa-solid fa-chevron-right"></i> AI 진단 모델 초기화 중...</div>';
+        
+        const logs = [
+            { time: 600, text: '<div style="color:#3182ce;"><i class="fa-solid fa-cloud-arrow-down"></i> NotebookLM 클라우드 인증 활성화...</div>' },
+            { time: 1300, text: '<div style="color:#a0aec0;"><i class="fa-solid fa-book"></i> &nbsp;[셀인 노트북] 교차 지식 분석 중... (54개 문서)</div>' },
+            { time: 2000, text: '<div style="color:#38a169;"><i class="fa-solid fa-circle-check"></i> &nbsp;[셀인 노트북] 연동 완료</div>' },
+            { time: 2600, text: '<div style="color:#a0aec0;"><i class="fa-solid fa-fire-flame-simple"></i> &nbsp;[단열 노트북] 외벽/결로 지식 추출 중... (23개 리포트)</div>' },
+            { time: 3300, text: '<div style="color:#38a169;"><i class="fa-solid fa-circle-check"></i> &nbsp;[단열 노트북] 연동 완료</div>' },
+            { time: 3900, text: '<div style="color:#a0aec0;"><i class="fa-solid fa-trowel-bricks"></i> &nbsp;[건축 노트북] 우수/방수 가이드 매칭 중... (15개 매뉴얼)</div>' },
+            { time: 4600, text: '<div style="color:#38a169;"><i class="fa-solid fa-circle-check"></i> &nbsp;[건축 노트북] 연동 완료</div>' },
+            { time: 5200, text: '<div style="color:#ecc94b; font-weight:bold;"><i class="fa-solid fa-brain"></i> 사용자 입력 정보 기반 최종 추천 도출 중...</div>' },
+        ];
+        
+        logs.forEach(log => {
+            setTimeout(() => {
+                logsEl.innerHTML += `<div>${log.text}</div>`;
+                logsEl.scrollTop = logsEl.scrollHeight;
+            }, log.time);
+        });
+        
+        setTimeout(() => {
+            modal.style.display = 'none';
+            generateAnalysisReport();
+            navigate('analysis');
+        }, 6000);
+    } else {
+        generateAnalysisReport();
+        navigate('analysis');
+    }
 }
 
 // ==========================================
@@ -435,23 +466,65 @@ function generateAnalysisReport() {
     const recoBox = document.getElementById('recommendation-text');
     let recoHtml = '';
     
-    switch(state.selectedProblem) {
-        case 'mold':
-        case 'condensation':
-            recoHtml += '<p>일반 수성 페인트나 락스 청소는 임시방편입니다. 항균 처리 후 벽면에 <b>세라믹 탄성코트</b> 또는 <b>이보드 단열재</b> 시공을 강력히 추천합니다.</p>';
-            recoHtml += '<p>환기 부족이 원인일 수 있으므로 창문 쪽 기밀 상태도 점검하세요.</p>';
-            break;
-        case 'bathroom':
-            recoHtml += '<p>욕실의 경우 타일 사이의 미세한 틈으로 물이 샐 수 있습니다.</p>';
-            recoHtml += '<p>줄눈 전용 코팅제와 욕실용 바이오 실리콘을 사용하여 꼼꼼하게 마감하고, 절대 시공 후 24시간 내에는 물을 사용하지 마세요.</p>';
-            break;
-        case 'floor':
-            recoHtml += '<p>바닥은 습기와 단차에 매우 민감합니다. 낡은 장판을 걷어냈을 때 바닥이 축축하다면 미장을 최소 1~2주 말려야 합니다.</p>';
-            break;
-        default:
-            recoHtml += '<p>기초부터 탄탄하게 계획을 세워야 실패 비용을 줄일 수 있습니다.</p>';
-            recoHtml += '<p>본격적인 시공 전 전문가의 1:1 온라인 코칭을 통해 정확한 자재와 공정 순서를 점검받아 보세요.</p>';
-            break;
+    const problemKey = state.selectedProblem || 'mold';
+    
+    if (problemKey === 'mold' || problemKey === 'condensation' || problemKey === 'insulation') {
+        recoHtml += `
+            <div style="margin-bottom: 16px; border-left: 3px solid #2b6cb0; padding-left: 10px; border-radius: 2px;">
+                <strong style="color:#2b6cb0; font-size:0.85rem; display:block; margin-bottom:4px;"><i class="fa-solid fa-book"></i> [셀인 노트북 지식 가이드]</strong>
+                <p style="margin:0; font-size:0.85rem; line-height:1.55; color:var(--text-main);">
+                    곰팡이 제거제 도포 후 벽면 내부에 잔존하는 습기는 수일 내에 도배지 안쪽에서 곰팡이를 즉시 재발시킵니다. 약품 처리 후 <strong>선풍기나 보일러를 가동하여 최소 24~48시간 동안 속벽까지 완전히 건조</strong>시키는 전처리 공정이 절대적인 필수 조치로 확인됩니다.
+                </p>
+            </div>
+            <div style="margin-bottom: 16px; border-left: 3px solid #2f855a; padding-left: 10px; border-radius: 2px;">
+                <strong style="color:#2f855a; font-size:0.85rem; display:block; margin-bottom:4px;"><i class="fa-solid fa-fire-flame-simple"></i> [단열 노트북 전문 가이드]</strong>
+                <p style="margin:0; font-size:0.85rem; line-height:1.55; color:var(--text-main);">
+                    외벽면에 폼블럭이나 얇은 단열벽지를 기밀하지 않게 부착하면, 단열재 뒷면의 미세 공기층(열교) 온도 저하로 결로수가 고여 벽체 자체가 내부로부터 썩게 됩니다. <strong>13mm 이상의 정석 압출 단열재(이보드 등)를 폼본드로 기밀하게 밀착 시공</strong>하는 것만이 단열 하자 차단의 유일한 해법입니다.
+                </p>
+            </div>
+            <div style="margin-bottom: 4px; border-left: 3px solid #dd6b20; padding-left: 10px; border-radius: 2px;">
+                <strong style="color:#dd6b20; font-size:0.85rem; display:block; margin-bottom:4px;"><i class="fa-solid fa-trowel-bricks"></i> [건축 노트북 공학 가이드]</strong>
+                <p style="margin:0; font-size:0.85rem; line-height:1.55; color:var(--text-main);">
+                    구축 건물의 천장 결로나 물기는 단순 실내 환기 부족이 아니라 상부층 외벽 균열 또는 배관 미세 누수일 가능성이 큽니다. 시공 전 <strong>반드시 전문가 누수 탐지를 진행</strong>하여 누수 원인을 원천 봉쇄한 뒤 단열 보수를 시작할 것을 권장합니다.
+                </p>
+            </div>
+        `;
+    } else if (problemKey === 'bathroom') {
+        recoHtml += `
+            <div style="margin-bottom: 16px; border-left: 3px solid #2b6cb0; padding-left: 10px; border-radius: 2px;">
+                <strong style="color:#2b6cb0; font-size:0.85rem; display:block; margin-bottom:4px;"><i class="fa-solid fa-book"></i> [셀인 노트북 지식 가이드]</strong>
+                <p style="margin:0; font-size:0.85rem; line-height:1.55; color:var(--text-main);">
+                    기존 오염된 실리콘의 물때와 기름기 위에 실리콘을 그대로 덧방하면 접착이 되지 않고 며칠 만에 탈락합니다. 전용 커터나 칼로 <strong>기존 실리콘을 단 1mm도 남김없이 완벽하게 긁어내는 바탕면 작업</strong>이 가장 중요합니다.
+                </p>
+            </div>
+            <div style="margin-bottom: 16px; border-left: 3px solid #2f855a; padding-left: 10px; border-radius: 2px;">
+                <strong style="color:#2f855a; font-size:0.85rem; display:block; margin-bottom:4px;"><i class="fa-solid fa-fire-flame-simple"></i> [단열 노트북 전문 가이드]</strong>
+                <p style="margin:0; font-size:0.85rem; line-height:1.55; color:var(--text-main);">
+                    욕실 모서리는 냉기가 침투해 실내 습기와 만나는 가장 취약한 결로 구역입니다. 실리콘 시공 전 <strong>헤어드라이어 등을 이용하여 물기를 한 방울도 없이 뽀송하게 건조</strong>한 후 곰팡이 방지용 바이오 실리콘을 충진해야 합니다.
+                </p>
+            </div>
+            <div style="margin-bottom: 4px; border-left: 3px solid #dd6b20; padding-left: 10px; border-radius: 2px;">
+                <strong style="color:#dd6b20; font-size:0.85rem; display:block; margin-bottom:4px;"><i class="fa-solid fa-trowel-bricks"></i> [건축 노트북 공학 가이드]</strong>
+                <p style="margin:0; font-size:0.85rem; line-height:1.55; color:var(--text-main);">
+                    욕실 벽면 타일 사이 줄눈의 이탈 및 크랙은 내부 방수층 균열로 번지는 1차 하자의 징후입니다. 장기 하자를 막기 위해 <strong>침투성 방수제를 줄눈 사이에 도포하여 침투 방수막을 먼저 형성</strong>해 주어야 합니다.
+                </p>
+            </div>
+        `;
+    } else {
+        recoHtml += `
+            <div style="margin-bottom: 16px; border-left: 3px solid #2b6cb0; padding-left: 10px; border-radius: 2px;">
+                <strong style="color:#2b6cb0; font-size:0.85rem; display:block; margin-bottom:4px;"><i class="fa-solid fa-book"></i> [셀인 노트북 지식 가이드]</strong>
+                <p style="margin:0; font-size:0.85rem; line-height:1.55; color:var(--text-main);">
+                    장판이나 데코타일 등 바닥재 시공 시 미세한 바탕면 요철은 시공 후 들뜸이나 밟았을 때 찢어짐을 유발합니다. 미장면의 미세한 돌기나 슬러지는 <strong>그라인딩하거나 헤라로 깨끗이 긁어내고 완전한 평탄화</strong>를 마쳐야 합니다.
+                </p>
+            </div>
+            <div style="margin-bottom: 4px; border-left: 3px solid #dd6b20; padding-left: 10px; border-radius: 2px;">
+                <strong style="color:#dd6b20; font-size:0.85rem; display:block; margin-bottom:4px;"><i class="fa-solid fa-trowel-bricks"></i> [건축 노트북 공학 가이드]</strong>
+                <p style="margin:0; font-size:0.85rem; line-height:1.55; color:var(--text-main);">
+                    바닥 철거 후 습기나 젖음이 발견된다면 난방배관 누수 또는 콘크리트 슬라브의 모세관 상승 습기입니다. 습기를 무시하고 바닥재로 덮으면 시간이 지나 썩게 되므로 <strong>최소 1~2주일 이상 난방을 켜고 바닥을 노출하여 바짝 건조</strong>해야 합니다.
+                </p>
+            </div>
+        `;
     }
     
     recoBox.innerHTML = recoHtml;
