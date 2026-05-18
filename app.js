@@ -1487,7 +1487,7 @@ Object.assign(window, {
 
     // 진단 흐름 (1~4단계)
     selectProblem,
-    goToQuestionnaire,
+    goToNextStep,
     goToBudgetStep,
     toggleChip,
     toggleBudgetChip,
@@ -1498,7 +1498,7 @@ Object.assign(window, {
 
     // 공정 (6단계)
     goToProcessStep,
-    toggleProcessCheck,
+    toggleStepCheck,
 
     // 자재 계산기 (7단계)
     goToCalculatorStep,
