@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Allow: /guide
+Allow: /guide/
+
+Sitemap: https://sel-in-care.pages.dev/sitemap.xml

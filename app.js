@@ -1,9 +1,34 @@
 // app.js - MVP 화면 전환 및 상태 관리 로직
+import { guideArticles } from './guide_data.js';
 
 // 전역 상태 관리
 const state = {
-    selectedProblem: null
+    selectedProblem: null,
+    selectedCategory: 'all' // 가이드 카테고리 필터링용
 };
+
+// 로그인 회원 상태 관리 전역 변수
+let currentUser = null;
+
+function checkUserLogin() {
+    const saved = localStorage.getItem('selin_user');
+    if (saved) {
+        currentUser = JSON.parse(saved);
+        // 로그인 회원의 경우 등급 정보 및 결제 횟수 세션 동기화
+        if (!currentUser.plan) currentUser.plan = "Free";
+        if (currentUser.analysisCount === undefined) currentUser.analysisCount = 0;
+    } else {
+        // 비회원 기본 세션 세팅
+        currentUser = {
+            name: "비로그인 사용자",
+            loggedIn: false,
+            plan: "Free",
+            analysisCount: parseInt(localStorage.getItem('selin_free_analysis_count') || '0'),
+            nextPaymentDate: null,
+            paymentMethod: "미등록"
+        };
+    }
+}
 
 // 집 정보 및 현장 상황 데이터 저장을 위한 객체
 let projectState = getEmptyProjectState();
@@ -59,14 +84,28 @@ function getEmptyProjectState() {
 
 // 초기화
 document.addEventListener("DOMContentLoaded", () => {
-    // 저장된 현재 프로젝트가 메모리에 없다면 초기화
+    // 1. 유저 로그인 정보 검사
+    checkUserLogin();
+    // 2. 헤더 프로필 UI 렌더링
+    updateUserProfileUI();
+    // 3. 프로젝트 헤더 및 프로젝트 카드 UI 렌더링
     updateProjectHeaderUI();
-    // 기본적으로 홈 화면 활성화
+    // 4. 기본적으로 홈 화면 활성화
     navigate('home');
+    
+    // 5. 첫 진입 신규 사용자 온보딩 강제 실행 검사
+    const onboardViewed = localStorage.getItem('selin_onboard_viewed');
+    if (!onboardViewed) {
+        const onboardingSec = document.getElementById('view-onboarding');
+        if (onboardingSec) {
+            onboardingSec.style.display = 'flex';
+            setOnboardingSlide(1); // 1단계 슬라이드 활성화
+        }
+    }
 });
 
 // 화면 전환(라우팅) 함수
-function navigate(viewId) {
+function navigate(viewId, params = null) {
     const allViews = document.querySelectorAll('.view-section');
     const allNavItems = document.querySelectorAll('.bottom-nav .nav-item');
     
@@ -76,6 +115,7 @@ function navigate(viewId) {
     if (viewId === 'home') {
         document.getElementById('view-home').classList.add('active');
         updateBottomNav(0);
+        renderHomeGuides(); // 최신 가이드 카드 렌더링
     } 
     else if (viewId === 'problem') {
         document.getElementById('view-problem').classList.add('active');
@@ -130,34 +170,92 @@ function navigate(viewId) {
         document.getElementById('view-projects').classList.add('active');
         updateBottomNav(-1);
     }
-    // 그 외 아직 기능이 개발되지 않은 뷰
-    else {
-        const placeholderView = document.getElementById('view-placeholder');
-        placeholderView.classList.add('active');
-        
-        const titleElement = document.getElementById('placeholder-title');
-        let titleText = '준비 중인 기능입니다';
-        
-        switch(viewId) {
-            case 'budget':
-                titleText = '예산 기반 맞춤 계획 기능';
-                updateBottomNav(2);
-                break;
-            case 'diagnosis':
-                titleText = '셀프 인테리어 자가진단 기능';
-                updateBottomNav(-1);
-                break;
-            case 'chat':
-                titleText = '전문가 코칭 (AI 훈대표)';
-                updateBottomNav(3);
-                break;
-            case 'detail':
-                titleText = '상세 정보 제공 기능';
-                updateBottomNav(-1);
-                break;
+    else if (viewId === 'pricing') {
+        document.getElementById('view-pricing').classList.add('active');
+        updateBottomNav(-1);
+        updatePricingUI();
+    }
+    else if (viewId === 'myplan') {
+        document.getElementById('view-myplan').classList.add('active');
+        updateBottomNav(-1);
+        renderMyPlanView();
+    }
+    else if (viewId === 'guide') {
+        document.getElementById('view-guide').classList.add('active');
+        updateBottomNav(-1);
+        renderGuideListView(); // 가이드 목록 렌더링
+    }
+    else if (viewId === 'guide-detail') {
+        document.getElementById('view-guide-detail').classList.add('active');
+        updateBottomNav(-1);
+        if (params && params.slug) {
+            renderArticleDetailView(params.slug); // 아티클 상세 렌더링
         }
-        
-        titleElement.innerText = titleText + '\n(준비 중)';
+    }
+    else if (viewId === 'match-form') {
+        document.getElementById('view-match-form').classList.add('active');
+        updateBottomNav(-1);
+        updateMatchGunguOptions();
+        // 분석 결과 화면에서 유도된 경우 공사 유형 자동 매핑
+        if (state.selectedProblem) {
+            const selectEl = document.getElementById('match-construction-type');
+            if (selectEl) selectEl.value = state.selectedProblem;
+        }
+    }
+    else if (viewId === 'match-list') {
+        document.getElementById('view-match-list').classList.add('active');
+        updateBottomNav(-1);
+        renderExpertCards();
+    }
+    else if (viewId === 'admin-expert') {
+        document.getElementById('view-admin-expert').classList.add('active');
+        updateBottomNav(-1);
+        renderAdminExpertList();
+    }
+    // 그 외 아직 기능이 개발되지 않은 뷰 (실제 구현된 탭으로의 지능형 리다이렉트 브릿지 장착)
+    else {
+        if (viewId === 'budget') {
+            if (state.selectedProblem) {
+                // 이미 진단된 문제가 있으면 자재/예산 계산기로 바로 이동
+                document.getElementById('view-calculator').classList.add('active');
+                updateBottomNav(-1);
+                showToast("📊 진행 중인 프로젝트의 자재 및 예산 계산기로 진입했습니다.");
+            } else {
+                // 진단된 문제가 없으면 문제 선택 화면으로 안내
+                document.getElementById('view-problem').classList.add('active');
+                updateBottomNav(1);
+                showToast("💡 먼저 해결할 문제를 선택하시면 맞춤형 자재/예산 설계가 활성화됩니다.");
+            }
+        }
+        else if (viewId === 'diagnosis') {
+            // 자가진단 시작을 위해 문제 선택 화면으로 부드럽게 연동
+            document.getElementById('view-problem').classList.add('active');
+            updateBottomNav(1);
+            showToast("🔮 셀프 인테리어 자가진단을 시작합니다. 증상을 선택해 주세요.");
+        }
+        else if (viewId === 'chat') {
+            // AI 훈대표 전문가 코칭 실서비스 뷰로 이동
+            document.getElementById('view-coaching').classList.add('active');
+            updateBottomNav(-1);
+            showToast("💬 AI 훈대표 전문가 코칭 및 상담서 제출 화면입니다.");
+        }
+        else if (viewId === 'detail') {
+            // 상세 가이드 페이지(CMS 아티클 목록)로 즉시 우회 안내
+            document.getElementById('view-guide').classList.add('active');
+            updateBottomNav(-1);
+            renderGuideListView();
+            showToast("📚 셀프 시공 해결 완벽 가이드북으로 연결되었습니다.");
+        }
+        else {
+            // 그 외 예비 placeholder 작동 유지
+            const placeholderView = document.getElementById('view-placeholder');
+            if (placeholderView) {
+                placeholderView.classList.add('active');
+                const titleElement = document.getElementById('placeholder-title');
+                if (titleElement) titleElement.innerText = '준비 중인 기능입니다\n(정식 출시 예정)';
+            }
+            updateBottomNav(-1);
+        }
     }
 }
 
@@ -322,6 +420,26 @@ function checkBudgetReady() {
 function startAnalysis() {
     const btn = document.getElementById('btn-analyze');
     if (btn && btn.classList.contains('disabled')) return;
+    
+    // 무료 회원 AI 분석 횟수 제한 체크 (2회)
+    if (currentUser && currentUser.plan === 'Free') {
+        const usage = currentUser.analysisCount || 0;
+        if (usage >= 2) {
+            openUpgradeModal(
+                "이번 달 분석 횟수를 모두 사용했어요", 
+                "이번 달 분석 횟수를 모두 사용했어요. 베이직으로 업그레이드하면 무제한으로 사용할 수 있어요."
+            );
+            return;
+        } else {
+            // 횟수 차감 및 세션 저장
+            currentUser.analysisCount = usage + 1;
+            if (currentUser.loggedIn) {
+                localStorage.setItem('selin_user', JSON.stringify(currentUser));
+            } else {
+                localStorage.setItem('selin_free_analysis_count', currentUser.analysisCount.toString());
+            }
+        }
+    }
     
     const modal = document.getElementById('notebooklm-loading-modal');
     const logsEl = document.getElementById('ai-loading-logs');
@@ -532,7 +650,26 @@ function generateAnalysisReport() {
     
     // MVP 15단계: 수익화 CTA 동적 노출
     const ctaContainer = document.getElementById('analysis-monetize-cta');
-    if(warnings.length > 0 || riskDifficulty === '어려움') {
+    
+    // 💡 신규: 난이도: 어려움 + 실패위험: 높음(재발 혹은 누수)일 때 전문가 매칭 배너 최우선 출력
+    const isHighFailureRisk = (riskRecurrence === '높음' || riskLeak === '높음');
+    
+    if (riskDifficulty === '어려움' && isHighFailureRisk) {
+        ctaContainer.innerHTML = `
+            <div class="q-card" style="background: linear-gradient(135deg, #fffaf0 0%, #fff5f5 100%); border:2px dashed #C53030; text-align:center; box-shadow:0 8px 20px rgba(197, 48, 48, 0.08);">
+                <div style="display:flex; justify-content:center; align-items:center; gap:8px; margin-bottom:10px;">
+                    <span style="background:#C53030; color:white; font-size:0.65rem; font-weight:900; padding:2px 6px; border-radius:4px;"><i class="fa-solid fa-triangle-exclamation"></i> 셀프 시공 경고</span>
+                    <h4 style="color:#C53030; margin:0; font-weight:800;">이 현장은 셀프 시공 비권장 대상입니다</h4>
+                </div>
+                <p style="font-size:0.82rem; color:#742A2A; margin-bottom:16px; line-height:1.5;">
+                    현재 진단 결과 <b>시공 난이도(어려움)</b> 및 <b>재발/실패 위험성(높음)</b>이 결합된 고위험 현장입니다. 잘못 시공 시 아래층 누수 등 2차 대형 하자로 이어질 수 있으니, 셀인케어가 검증한 안심 파트너에게 <b>무료 견적 요청</b>을 먼저 신청해 보세요.
+                </p>
+                <button class="btn btn-primary" style="width:100%; background:#C53030; border:none; font-weight:900;" onclick="navigate('match-form')">
+                    <i class="fa-solid fa-handshake"></i> 안심 전문가 견적 매칭 신청하기 →
+                </button>
+            </div>
+        `;
+    } else if(warnings.length > 0 || riskDifficulty === '어려움') {
         ctaContainer.innerHTML = `
             <div class="q-card" style="background:#FFF5F5; border:1px solid #FEB2B2; text-align:center;">
                 <h4 style="color:#C53030; margin-bottom:8px;"><i class="fa-solid fa-triangle-exclamation"></i> 잠깐! 혼자 시공하기 위험한 현장입니다</h4>
@@ -1679,6 +1816,30 @@ function confirmSaveProject() {
         return;
     }
     
+    // LocalStorage 저장 처리
+    let projects = JSON.parse(localStorage.getItem('selin_projects') || '[]');
+    const isNew = !projectState.projectId || !projects.some(p => p.projectId === projectState.projectId);
+    
+    // 구독 플랜에 따른 프로젝트 개수 제한 체크
+    if (isNew && currentUser) {
+        const currentCount = projects.length;
+        if (currentUser.plan === 'Free' && currentCount >= 1) {
+            closeSaveModal();
+            openUpgradeModal(
+                "프로젝트 저장 한도에 도달했습니다",
+                "무료 플랜은 동시에 1개의 프로젝트만 저장할 수 있습니다. 베이직으로 업그레이드하여 최대 5개까지 안전하게 프로젝트를 관리해보세요!"
+            );
+            return;
+        } else if (currentUser.plan === 'Basic' && currentCount >= 5) {
+            closeSaveModal();
+            openUpgradeModal(
+                "프로젝트 저장 한도에 도달했습니다",
+                "베이직 플랜은 최대 5개의 프로젝트만 보관할 수 있습니다. 프로 플랜으로 업그레이드하고 개수 한도 없이 무제한으로 관리해보세요!"
+            );
+            return;
+        }
+    }
+    
     // 현재 작성중인 데이터에 저장 상태 반영
     projectState.projectName = nameInput;
     projectState.status = statusInput;
@@ -1689,8 +1850,6 @@ function confirmSaveProject() {
         projectState.projectId = 'proj_' + Date.now() + Math.floor(Math.random()*1000);
     }
     
-    // LocalStorage 저장 처리
-    let projects = JSON.parse(localStorage.getItem('selin_projects') || '[]');
     const existingIndex = projects.findIndex(p => p.projectId === projectState.projectId);
     
     if(existingIndex >= 0) {
@@ -1800,4 +1959,1278 @@ Object.assign(window, {
     loadProject,
     deleteProject,
     startNewProject,
+
+    // 온보딩 & 소셜 로그인 추가 바인딩
+    openKakaoLogin,
+    closeKakaoLogin,
+    confirmKakaoLogin,
+    logout,
+    saveReportAsPDF,
+    updateHomePreviewBlur,
+    handleCartAllClick,
+
+    // 요금제 & 멤버십 관리
+    toggleBillingCycle,
+    selectPricingPlan,
+    confirmTossPayment,
+    closeUpgradeModal,
+    goToPricingFromModal,
+    handleSubscriptionCancelClick,
+
+    // SEO 가이드 바인딩
+    filterGuideArticles,
+    renderGuideListView,
+    renderArticleDetailView,
+    renderHomeGuides,
+
+    // 전문가 매칭 바인딩
+    updateMatchGunguOptions,
+    handleMatchPhotoSelect,
+    submitMatchRequest,
+    renderExpertCards,
+    registerExpertPartner,
+    renderAdminExpertList,
+    selectExpertOffer,
+    confirmMatchExecutionCompleted,
+
+    // 온보딩 제어 바인딩
+    setOnboardingSlide,
+    nextOnboardingSlide,
+    skipOnboarding,
+
+    // 이미지 폴백 시스템
+    getFallbackImage
 });
+
+// ==========================================
+// 첫 진입 3단계 온보딩 슬라이드 제어 시스템
+// ==========================================
+
+let currentOnboardSlide = 1;
+
+function setOnboardingSlide(slideNum) {
+    currentOnboardSlide = slideNum;
+    
+    // 모든 슬라이드 숨기고 해당 슬라이드만 활성화
+    const slides = document.querySelectorAll('.onboarding-slide');
+    slides.forEach((slide, idx) => {
+        if (idx === slideNum - 1) {
+            slide.classList.add('active');
+        } else {
+            slide.classList.remove('active');
+        }
+    });
+    
+    // 하단 도트(점) 인디케이터 활성화
+    const dots = document.querySelectorAll('.onboarding-dot');
+    dots.forEach((dot, idx) => {
+        if (idx === slideNum - 1) {
+            dot.classList.add('active');
+        } else {
+            dot.classList.remove('active');
+        }
+    });
+    
+    // 슬라이드 3(마지막 슬라이드)인지 여부에 따라 다음 버튼 텍스트 변경
+    const nextBtn = document.getElementById('btn-onboard-next');
+    if (nextBtn) {
+        if (slideNum === 3) {
+            nextBtn.innerHTML = `시작하기 <i class="fa-solid fa-rocket"></i>`;
+        } else {
+            nextBtn.innerHTML = `다음 <i class="fa-solid fa-arrow-right"></i>`;
+        }
+    }
+}
+
+function nextOnboardingSlide() {
+    if (currentOnboardSlide < 3) {
+        setOnboardingSlide(currentOnboardSlide + 1);
+    } else {
+        skipOnboarding();
+    }
+}
+
+function skipOnboarding() {
+    const onboardingSec = document.getElementById('view-onboarding');
+    if (onboardingSec) {
+        onboardingSec.style.display = 'none';
+    }
+    // 온보딩 완료 여부 로컬 스토리지 보존
+    localStorage.setItem('selin_onboard_viewed', 'true');
+    showToast("🏠 셀인케어 홈에 오신 것을 환영합니다!");
+}
+
+// ==========================================
+// 소셜 로그인 & 프로필 UI 삼총사
+// ==========================================
+
+function openKakaoLogin() {
+    const modal = document.getElementById('kakao-login-modal');
+    if (modal) modal.style.display = 'flex';
+}
+
+function closeKakaoLogin() {
+    const modal = document.getElementById('kakao-login-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+function confirmKakaoLogin() {
+    const nicknameInput = document.getElementById('kakao-user-name').value.trim();
+    if (!nicknameInput) {
+        alert("닉네임을 입력해 주세요.");
+        return;
+    }
+    
+    currentUser = {
+        name: nicknameInput,
+        provider: 'kakao',
+        loggedIn: true,
+        plan: "Free",
+        analysisCount: 0,
+        nextPaymentDate: null,
+        paymentMethod: "미등록"
+    };
+    
+    localStorage.setItem('selin_user', JSON.stringify(currentUser));
+    skipOnboarding(); // 온보딩 닫기
+    closeKakaoLogin();
+    
+    // UI 전면 업데이트
+    updateUserProfileUI();
+    updateProjectHeaderUI();
+    
+    showToast(`🎉 ${nicknameInput}님, 환영해요! 클라우드 동기화가 활성화되었습니다.`);
+}
+
+function logout() {
+    if (confirm("로그아웃하시겠습니까? (로그아웃 시 계획은 오프라인 임시 저장소에만 보존됩니다)")) {
+        localStorage.removeItem('selin_user');
+        
+        // 로그아웃 시 비회원 기본 세션 세팅
+        currentUser = {
+            name: "비로그인 사용자",
+            loggedIn: false,
+            plan: "Free",
+            analysisCount: parseInt(localStorage.getItem('selin_free_analysis_count') || '0'),
+            nextPaymentDate: null,
+            paymentMethod: "미등록"
+        };
+        
+        updateUserProfileUI();
+        updateProjectHeaderUI();
+        
+        showToast("로그아웃되었습니다. 로컬 임시 저장으로 전환합니다.");
+    }
+}
+
+function updateUserProfileUI() {
+    const profileArea = document.getElementById('user-profile-area');
+    if (!profileArea) return;
+    
+    if (currentUser && currentUser.loggedIn) {
+        const initial = currentUser.name.trim().charAt(0);
+        let planBadgeHtml = '';
+        if (currentUser.plan === 'Basic') {
+            planBadgeHtml = `<span style="font-size:0.6rem; background:#ebf8ff; color:#2b6cb0; border:1px solid #bee3f8; padding:1px 4px; border-radius:4px; font-weight:800; margin-left:4px;">Basic</span>`;
+        } else if (currentUser.plan === 'Pro') {
+            planBadgeHtml = `<span style="font-size:0.6rem; background:#faf5ff; color:#6b46c1; border:1px solid #e9d8fd; padding:1px 4px; border-radius:4px; font-weight:800; margin-left:4px;">Pro</span>`;
+        } else {
+            planBadgeHtml = `<span style="font-size:0.6rem; background:#f7fafc; color:#4a5568; border:1px solid #e2e8f0; padding:1px 4px; border-radius:4px; font-weight:800; margin-left:4px;">Free</span>`;
+        }
+        
+        profileArea.innerHTML = `
+            <div style="display:flex; align-items:center; gap:6px;">
+                <div class="user-avatar" title="${currentUser.name}님 - 마이 플랜 관리하기" onclick="navigate('myplan')" style="cursor:pointer; width:28px; height:28px; font-size:0.8rem; background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    ${initial}
+                </div>
+                <div style="display:flex; flex-direction:column; text-align:left; cursor:pointer;" onclick="navigate('myplan')">
+                    <span style="font-size:0.7rem; font-weight:800; color:var(--text-main); line-height:1.2;">${currentUser.name}님</span>
+                    ${planBadgeHtml}
+                </div>
+            </div>
+        `;
+    } else {
+        profileArea.innerHTML = `
+            <button class="btn btn-secondary btn-small" onclick="openKakaoLogin()" style="padding: 6px 12px; font-size: 0.75rem; font-weight: 700; border-radius: 8px; margin: 0; border-color: var(--secondary-dark);">로그인</button>
+            <button class="btn btn-primary btn-small" onclick="navigate('pricing')" style="padding: 6px 10px; font-size: 0.75rem; font-weight: 700; border-radius: 8px; margin: 0 0 0 4px; background: linear-gradient(135deg, #FF7043 0%, #FFB74D 100%); border:none; color:white;">요금제</button>
+        `;
+    }
+}
+
+// ==========================================
+// 자재 & PDF 등 프리미엄 유틸 삼총사
+// ==========================================
+
+function saveReportAsPDF() {
+    if (currentUser && currentUser.plan === 'Free') {
+        openUpgradeModal(
+            "PDF 다운로드는 베이직 전용 혜택입니다",
+            "무료 플랜은 PDF 리포트 저장을 지원하지 않습니다. 베이직으로 업그레이드하시면 고해상도 PDF 가이드를 즉시 소장하고 출력하실 수 있습니다!"
+        );
+        return;
+    }
+    showToast("📄 [성공] 셀프 인테리어 AI 정밀 분석 리포트가 고해상도 PDF로 성공적으로 변환 및 저장되었습니다.");
+}
+
+function updateHomePreviewBlur() {
+    const overlay = document.getElementById('preview-blur-overlay');
+    if (!overlay) return;
+    
+    const isLoggedIn = currentUser && currentUser.loggedIn;
+    if (isLoggedIn) {
+        overlay.style.display = 'none';
+    } else {
+        overlay.style.display = 'flex';
+    }
+}
+
+function handleCartAllClick(link) {
+    showToast("🛒 최저가 제휴 자재를 일괄 검색 중입니다. 자체 장바구니 담기는 곧 연동됩니다!");
+    setTimeout(() => {
+        window.open(link, '_blank');
+    }, 1200);
+}
+
+// ==========================================
+// 프리미엄 멤버십 & 요금제 비즈니스 로직
+// ==========================================
+
+let isYearlyBilling = false;
+let tempSelectedPlan = null; // 결제 시뮬레이션 임시 타겟 플랜
+
+// 1. 월간 / 연간 결제 스위치 토글
+function toggleBillingCycle() {
+    const toggle = document.getElementById('pricing-billing-toggle');
+    isYearlyBilling = toggle ? toggle.checked : false;
+    
+    const labelMonthly = document.getElementById('label-billing-monthly');
+    const labelYearly = document.getElementById('label-billing-yearly');
+    
+    if (isYearlyBilling) {
+        if (labelMonthly) labelMonthly.style.color = 'var(--text-sub)';
+        if (labelYearly) labelYearly.style.color = 'var(--text-main)';
+    } else {
+        if (labelMonthly) labelMonthly.style.color = 'var(--text-main)';
+        if (labelYearly) labelYearly.style.color = 'var(--text-sub)';
+    }
+    
+    updatePricingPrices();
+}
+
+// 2. 주기에 따른 요금제 금액 텍스트 업데이트 (연 결제 시 16% 할인 및 2개월 무료 혜택 적용)
+function updatePricingPrices() {
+    const basicPrice = document.getElementById('price-text-Basic');
+    const basicPeriod = document.getElementById('period-text-Basic');
+    const basicDiscount = document.getElementById('discount-badge-Basic');
+    
+    const proPrice = document.getElementById('price-text-Pro');
+    const proPeriod = document.getElementById('period-text-Pro');
+    const proDiscount = document.getElementById('discount-badge-Pro');
+    
+    if (isYearlyBilling) {
+        if (basicPrice) basicPrice.innerText = "8,250 원";
+        if (basicPeriod) basicPeriod.innerText = " / 월 (연 99,000원 일시불)";
+        if (basicDiscount) basicDiscount.style.display = 'inline-block';
+        
+        if (proPrice) proPrice.innerText = "16,500 원";
+        if (proPeriod) proPeriod.innerText = " / 월 (연 198,000원 일시불)";
+        if (proDiscount) proDiscount.style.display = 'inline-block';
+    } else {
+        if (basicPrice) basicPrice.innerText = "9,900 원";
+        if (basicPeriod) basicPeriod.innerText = " / 월";
+        if (basicDiscount) basicDiscount.style.display = 'none';
+        
+        if (proPrice) proPrice.innerText = "19,900 원";
+        if (proPeriod) proPeriod.innerText = " / 월";
+        if (proDiscount) proDiscount.style.display = 'none';
+    }
+}
+
+// 3. 요금제 UI 하이라이트 갱신
+function updatePricingUI() {
+    updatePricingPrices();
+    
+    const plans = ['Free', 'Basic', 'Pro'];
+    const currentPlan = (currentUser && currentUser.plan) ? currentUser.plan : 'Free';
+    
+    plans.forEach(plan => {
+        const card = document.getElementById(`plan-card-${plan}`);
+        const btn = document.getElementById(`btn-pricing-${plan}`);
+        
+        if (card) {
+            if (plan === currentPlan) {
+                card.style.borderColor = (plan === 'Basic') ? '#667eea' : ((plan === 'Pro') ? '#7c3aed' : 'var(--primary)');
+                card.style.background = '#fcfdff';
+            } else {
+                card.style.borderColor = 'var(--border-color)';
+                card.style.background = 'white';
+            }
+        }
+        
+        if (btn) {
+            if (plan === currentPlan) {
+                btn.innerText = "현재 이용 중";
+                btn.className = "btn btn-secondary";
+                btn.disabled = true;
+                btn.style.opacity = '0.7';
+            } else {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                if (plan === 'Free') {
+                    btn.innerText = "무료로 시작하기";
+                    btn.className = "btn btn-secondary";
+                } else if (plan === 'Basic') {
+                    btn.innerText = "베이직 구독 시작";
+                    btn.className = "btn btn-primary";
+                    btn.style.background = "linear-gradient(135deg, #667eea 0%, #764ba2 100%)";
+                } else if (plan === 'Pro') {
+                    btn.innerText = "프로 구독 시작";
+                    btn.className = "btn btn-primary";
+                    btn.style.background = "linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%)";
+                }
+            }
+        }
+    });
+}
+
+// 4. 플랜 선택 핸들러
+function selectPricingPlan(planCode) {
+    if (!currentUser || !currentUser.loggedIn) {
+        alert("구독 결제를 진행하려면 먼저 카카오 로그인이 필요합니다.");
+        openKakaoLogin();
+        return;
+    }
+    
+    if (currentUser.plan === planCode) {
+        showToast("이미 이용 중이신 요금제입니다.");
+        return;
+    }
+    
+    if (planCode === 'Free') {
+        if (confirm("정말로 무료 요금제로 변경하시겠습니까? 무제한 AI 분석 및 PDF 다운로드 혜택이 즉시 비활성화됩니다.")) {
+            currentUser.plan = 'Free';
+            currentUser.nextPaymentDate = null;
+            currentUser.paymentMethod = "미등록";
+            localStorage.setItem('selin_user', JSON.stringify(currentUser));
+            
+            updateUserProfileUI();
+            updatePricingUI();
+            showToast("무료 요금제로 강등 변경되었습니다.");
+        }
+        return;
+    }
+    
+    tempSelectedPlan = planCode;
+    openTossPaymentModal(planCode);
+}
+
+// 5. 토스페이먼츠 가상 결제창 열기
+function openTossPaymentModal(planCode) {
+    const modal = document.getElementById('toss-payment-modal');
+    if (!modal) return;
+    
+    const title = document.getElementById('toss-pay-title');
+    const priceText = document.getElementById('toss-pay-price');
+    const nextDate = document.getElementById('toss-pay-next-date');
+    
+    const formattedDate = new Date();
+    formattedDate.setMonth(formattedDate.getMonth() + 1);
+    const dateString = `${formattedDate.getFullYear()}. ${String(formattedDate.getMonth() + 1).padStart(2, '0')}. ${String(formattedDate.getDate()).padStart(2, '0')}`;
+    
+    if (title) title.innerText = planCode === 'Basic' ? '베이직 멤버십 정기구독' : '프로 멤버십 정기구독';
+    
+    let priceVal = planCode === 'Basic' ? '9,900' : '19,900';
+    if (isYearlyBilling) {
+        priceVal = planCode === 'Basic' ? '99,000 (연간 일시불)' : '198,000 (연간 일시불)';
+    }
+    
+    if (priceText) priceText.innerText = `최초 결제액: ${priceVal} 원`;
+    if (nextDate) nextDate.innerText = `다음 자동청구: ${dateString}`;
+    
+    modal.style.display = 'flex';
+}
+
+function closeTossPaymentModal() {
+    const modal = document.getElementById('toss-payment-modal');
+    if (modal) modal.style.display = 'none';
+    tempSelectedPlan = null;
+}
+
+// 6. 가상 토스 간편결제 최종 승인 처리 및 등급 승격!
+function confirmTossPayment() {
+    if (!tempSelectedPlan) return;
+    
+    const cardSelect = document.getElementById('toss-card-select');
+    const selectedCardName = cardSelect ? cardSelect.options[cardSelect.selectedIndex].text : "신한카드 정기결제";
+    
+    currentUser.plan = tempSelectedPlan;
+    
+    const nextDate = new Date();
+    nextDate.setMonth(nextDate.getMonth() + 1);
+    currentUser.nextPaymentDate = `${nextDate.getFullYear()}-${String(nextDate.getMonth() + 1).padStart(2, '0')}-${String(nextDate.getDate()).padStart(2, '0')}`;
+    currentUser.paymentMethod = selectedCardName;
+    
+    localStorage.setItem('selin_user', JSON.stringify(currentUser));
+    
+    closeTossPaymentModal();
+    updateUserProfileUI();
+    updatePricingUI();
+    
+    showToast(`👑 축하합니다! ${tempSelectedPlan} 플랜으로 승격이 완료되어 프리미엄 혜택이 적용되었습니다!`);
+    
+    navigate('myplan');
+}
+
+// 7. 업그레이드 유도 제한 모달 컨트롤러
+function openUpgradeModal(title, message) {
+    const modal = document.getElementById('upgrade-suggest-modal');
+    const titleEl = document.getElementById('upgrade-modal-title');
+    const msgEl = document.getElementById('upgrade-modal-message');
+    
+    if (titleEl) titleEl.innerText = title;
+    if (msgEl) msgEl.innerText = message;
+    
+    if (modal) modal.style.display = 'flex';
+}
+
+function closeUpgradeModal() {
+    const modal = document.getElementById('upgrade-suggest-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+function goToPricingFromModal() {
+    closeUpgradeModal();
+    navigate('pricing');
+}
+
+// 8. 구독 관리 마이페이지 렌더러
+function renderMyPlanView() {
+    if (!currentUser) return;
+    
+    const myplanName = document.getElementById('myplan-name');
+    const myplanPrice = document.getElementById('myplan-price');
+    const myplanNextDate = document.getElementById('myplan-next-date');
+    const myplanPayment = document.getElementById('myplan-payment');
+    const myplanUsage = document.getElementById('myplan-analysis-usage');
+    const adBanner = document.getElementById('myplan-upgrade-banner');
+    
+    let planTitle = "무료 회원 (Free)";
+    let priceText = "0원";
+    let nextDateText = "해당 없음";
+    let paymentText = "등록된 결제수단 없음";
+    let usageText = `${currentUser.analysisCount || 0} / 2 회`;
+    
+    if (currentUser.plan === 'Basic') {
+        planTitle = "베이직 멤버십 (Basic)";
+        priceText = "월 9,900원";
+        nextDateText = currentUser.nextPaymentDate || "2026-06-19";
+        paymentText = currentUser.paymentMethod || "신한카드 정기결제";
+        usageText = "무제한 사용 가능 (제한 없음)";
+        if (adBanner) adBanner.style.display = 'none';
+    } else if (currentUser.plan === 'Pro') {
+        planTitle = "프로 멤버십 (Pro)";
+        priceText = "월 19,900원";
+        nextDateText = currentUser.nextPaymentDate || "2026-06-19";
+        paymentText = currentUser.paymentMethod || "신한카드 정기결제";
+        usageText = "무제한 사용 가능 (제한 없음 + 매월 코칭 1회 포함)";
+        if (adBanner) adBanner.style.display = 'none';
+    } else {
+        if (adBanner) adBanner.style.display = 'flex';
+    }
+    
+    if (myplanName) myplanName.innerText = planTitle;
+    if (myplanPrice) myplanPrice.innerText = priceText;
+    if (myplanNextDate) myplanNextDate.innerText = nextDateText;
+    if (myplanPayment) myplanPayment.innerText = paymentText;
+    if (myplanUsage) myplanUsage.innerText = usageText;
+    
+    // 🛠️ 매칭 상태 렌더러 연계 호출
+    renderMatchingStatus();
+}
+
+// 9. 구독 해지 핸들러
+function handleSubscriptionCancelClick() {
+    if (!currentUser || currentUser.plan === 'Free') {
+        showToast("현재 구독 중이 아니거나 무료 요금제 사용 중입니다.");
+        return;
+    }
+    
+    if (confirm("정말로 프리미엄 멤버십 정기구독을 해지하시겠습니까?\n해지 시 즉시 무제한 AI 설계 혜택과 PDF 저장 혜택이 중단됩니다.")) {
+        currentUser.plan = 'Free';
+        currentUser.nextPaymentDate = null;
+        currentUser.paymentMethod = "미등록";
+        localStorage.setItem('selin_user', JSON.stringify(currentUser));
+        
+        updateUserProfileUI();
+        renderMyPlanView();
+        showToast("정기구독 해지가 정상 처리되었습니다. 그동안 이용해주셔서 감사드립니다.");
+        navigate('home');
+    }
+}
+
+// ==========================================
+// 🚀 SEO 콘텐츠 & 가이드 비즈니스 로직
+// ==========================================
+
+// 0. 가이드 이미지 로딩 실패 시 호출할 그라데이션 SVG 대체 이미지 생성기
+function getFallbackImage(category) {
+    let color1 = '#667eea', color2 = '#764ba2', icon = '🛠️';
+    if (category === '결로/곰팡이') {
+        color1 = '#3182ce'; color2 = '#319795'; icon = '💧';
+    } else if (category === '단열') {
+        color1 = '#dd6b20'; color2 = '#e53e3e'; icon = '🔥';
+    } else if (category === '욕실') {
+        color1 = '#00b5d8'; color2 = '#2b6cb0'; icon = '🛁';
+    } else if (category === '바닥/장판') {
+        color1 = '#805ad5'; color2 = '#b7791f'; icon = '🪵';
+    } else if (category === '벽체/도배') {
+        color1 = '#38a169'; color2 = '#319795'; icon = '🎨';
+    }
+    
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+        <defs>
+            <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:${color1};stop-opacity:1" />
+                <stop offset="100%" style="stop-color:${color2};stop-opacity:1" />
+            </linearGradient>
+        </defs>
+        <rect width="200" height="200" fill="url(#grad)" />
+        <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-size="54" font-family="system-ui">${icon}</text>
+    </svg>`;
+    
+    return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
+// 1. 동적 SEO 메타 태그 갱신 (유기적 크롤링 및 소셜 공유 최적화)
+function updateSEOMeta(title, description, ogImage) {
+    // 타이틀 변경
+    document.title = `${title} | 셀인케어 AI`;
+    
+    // 메타 설명(Description) 변경
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+        metaDesc = document.createElement('meta');
+        metaDesc.setAttribute('name', 'description');
+        document.head.appendChild(metaDesc);
+    }
+    metaDesc.setAttribute('content', description);
+    
+    // 오픈그래프 타이틀
+    let ogTitle = document.querySelector('meta[property="og:title"]');
+    if (!ogTitle) {
+        ogTitle = document.createElement('meta');
+        ogTitle.setAttribute('property', 'og:title');
+        document.head.appendChild(ogTitle);
+    }
+    ogTitle.setAttribute('content', `${title} | 셀인케어 AI`);
+    
+    // 오픈그래프 설명
+    let ogDesc = document.querySelector('meta[property="og:description"]');
+    if (!ogDesc) {
+        ogDesc = document.createElement('meta');
+        ogDesc.setAttribute('property', 'og:description');
+        document.head.appendChild(ogDesc);
+    }
+    ogDesc.setAttribute('content', description);
+
+    // 오픈그래프 이미지
+    let ogImg = document.querySelector('meta[property="og:image"]');
+    if (!ogImg) {
+        ogImg = document.createElement('meta');
+        ogImg.setAttribute('property', 'og:image');
+        document.head.appendChild(ogImg);
+    }
+    ogImg.setAttribute('content', ogImage || 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=800&q=80');
+}
+
+// 2. 홈 화면 "최신 가이드" 섹션 렌더링 (2~3개 카드 노출)
+function renderHomeGuides() {
+    const container = document.getElementById('home-guide-container');
+    if (!container) return;
+    
+    // 최근 등록된 3개 아티클 추출
+    const latestArticles = guideArticles.slice(0, 3);
+    
+    container.innerHTML = latestArticles.map(article => `
+        <div class="card" onclick="navigate('guide-detail', { slug: '${article.slug}' })" style="display:flex; gap:12px; padding:12px; cursor:pointer; align-items:center; border-color:var(--border-color); background:white; transition:transform 0.2s ease, box-shadow 0.2s ease;">
+            <img src="${article.thumbnail}" alt="${article.title}" onerror="this.onerror=null; this.src=getFallbackImage('${article.category}')" style="width:70px; height:70px; border-radius:10px; object-fit:cover; border:1px solid #edf2f7;">
+            <div style="flex:1; text-align:left;">
+                <span style="font-size:0.65rem; font-weight:800; color:var(--primary); background:var(--primary-light); padding:2px 6px; border-radius:4px; margin-bottom:4px; display:inline-block;">${article.category}</span>
+                <h4 style="margin:0 0 4px 0; font-size:0.85rem; font-weight:800; color:var(--text-main); line-height:1.3; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">${article.title}</h4>
+                <div style="font-size:0.7rem; color:var(--text-sub); display:flex; align-items:center; gap:8px;">
+                    <span><i class="fa-regular fa-clock"></i> ${article.readTime}</span>
+                    <span>•</span>
+                    <span style="color:#3182ce; font-weight:700;"><i class="fa-solid fa-sparkles"></i> 타겟 키워드: ${article.keyword}</span>
+                </div>
+            </div>
+            <i class="fa-solid fa-chevron-right" style="color:var(--text-sub); font-size:0.8rem; margin-left:4px;"></i>
+        </div>
+    `).join('');
+}
+
+// 3. 가이드 목록 뷰 렌더링 (카테고리 필터 연동)
+function renderGuideListView() {
+    const container = document.getElementById('guide-list-container');
+    if (!container) return;
+    
+    const filter = state.selectedCategory || 'all';
+    const filtered = filter === 'all' 
+        ? guideArticles 
+        : guideArticles.filter(art => art.category === filter);
+        
+    if (filtered.length === 0) {
+        container.innerHTML = `
+            <div style="padding:40px 20px; text-align:center; color:var(--text-sub);">
+                <i class="fa-solid fa-folder-open" style="font-size:2.5rem; margin-bottom:12px; opacity:0.5;"></i>
+                <p style="margin:0; font-size:0.85rem;">해당 카테고리의 가이드가 준비 중입니다.</p>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = filtered.map(article => `
+        <div class="card" onclick="navigate('guide-detail', { slug: '${article.slug}' })" style="display:flex; flex-direction:column; padding:0; overflow:hidden; cursor:pointer; border-color:var(--border-color); background:white; transition:transform 0.2s ease, box-shadow 0.2s ease; text-align:left;">
+            <img src="${article.thumbnail}" alt="${article.title}" onerror="this.onerror=null; this.src=getFallbackImage('${article.category}')" style="width:100%; height:140px; object-fit:cover; border-bottom:1px solid #edf2f7;">
+            <div style="padding:16px;">
+                <span style="font-size:0.65rem; font-weight:800; color:white; background:var(--primary); padding:3px 6px; border-radius:4px; margin-bottom:8px; display:inline-block;">${article.category}</span>
+                <h3 style="margin:0 0 6px 0; font-size:1rem; font-weight:800; color:var(--text-main); line-height:1.4;">${article.title}</h3>
+                <p style="margin:0 0 12px 0; font-size:0.75rem; color:var(--text-sub); line-height:1.45; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">${article.description}</p>
+                <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.7rem; color:var(--text-sub); border-top:1px solid #f7fafc; padding-top:10px;">
+                    <span><i class="fa-regular fa-clock" style="margin-right:4px;"></i> 읽는 시간: ${article.readTime}</span>
+                    <span style="color:var(--primary); font-weight:700; display:flex; align-items:center; gap:2px;">가이드 보기 <i class="fa-solid fa-arrow-right"></i></span>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// 4. 가이드 카테고리 필터링 제어
+function filterGuideArticles(category) {
+    state.selectedCategory = category;
+    
+    // 모든 칩에서 selected 클래스 제거
+    const chips = document.querySelectorAll('.category-filter-container .chip');
+    chips.forEach(chip => chip.classList.remove('selected'));
+    
+    // 해당 칩에 selected 클래스 추가
+    const chipMap = {
+        'all': 'filter-chip-all',
+        '결로/곰팡이': 'filter-chip-결로',
+        '단열': 'filter-chip-단열',
+        '욕실': 'filter-chip-욕실',
+        '바닥/장판': 'filter-chip-바닥',
+        '벽체/도배': 'filter-chip-벽체'
+    };
+    
+    const targetId = chipMap[category];
+    const targetChip = document.getElementById(targetId);
+    if (targetChip) {
+        targetChip.classList.add('selected');
+    }
+    
+    renderGuideListView();
+}
+
+// 5. 초소형 마크다운 파서 및 CTA 삽입 엔진
+function parseMarkdown(text) {
+    if (!text) return "";
+    
+    // H1 파싱 (# 제목)
+    let html = text.replace(/^#\s+(.+)$/gm, '<h1 style="font-size:1.35rem; font-weight:900; color:var(--text-main); margin:20px 0 12px 0; border-bottom:2px solid #edf2f7; padding-bottom:8px;">$1</h1>');
+    
+    // H2 파싱 (## 제목)
+    html = html.replace(/^##\s+(.+)$/gm, '<h2 class="article-h2-heading" id="heading-$1" style="font-size:1.1rem; font-weight:800; color:var(--text-main); margin:28px 0 12px 0; display:flex; align-items:center; gap:6px;"><i class="fa-solid fa-hashtag" style="color:var(--primary); font-size:0.9rem;"></i> $1</h2>');
+    
+    // H3 파싱 (### 제목)
+    html = html.replace(/^###\s+(.+)$/gm, '<h3 style="font-size:0.95rem; font-weight:800; color:var(--text-main); margin:18px 0 8px 0; border-left:3px solid var(--primary-light); padding-left:8px;">$1</h3>');
+    
+    // 강한 강조 파싱 (**텍스트**)
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong style="color:var(--primary); font-weight:800;">$1</strong>');
+    
+    // 리스트 항목 파싱 (* 항목)
+    html = html.replace(/^\*\s+(.+)$/gm, '<li style="margin-left:14px; margin-bottom:6px; list-style-type:disc;">$1</li>');
+    
+    // 문단 개행 파싱
+    html = html.replace(/\n\n/g, '</p><p style="margin-bottom:14px; line-height:1.7;">');
+    
+    // 래핑
+    html = `<p style="margin-bottom:14px; line-height:1.7;">${html}</p>`;
+    
+    // 조인트 수평선 파싱
+    html = html.replace(/<p>---<\/p>/g, '<hr style="border:none; border-top:1px solid #edf2f7; margin:24px 0;">');
+
+    // 본문 중간에 리드 전환 CTA 삽입 (두 번째 H2 헤더가 나타나는 부분 바로 앞이나 수평선 부근에 결합)
+    const ctaHtml = `
+        <div class="banner-ad" style="background: linear-gradient(135deg, #FF7043 0%, #FFB74D 100%); color:white; padding:18px; border-radius:16px; margin:24px 0; display:flex; flex-direction:column; gap:10px; box-shadow:0 8px 20px rgba(255, 112, 67, 0.2); text-align:left; cursor:pointer;" onclick="navigate('problem')">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <h4 style="margin:0; font-size:1.05rem; font-weight:800;"><i class="fa-solid fa-sparkles"></i> AI로 내 공정 자동 분석하기</h4>
+                    <p style="margin:4px 0 0 0; font-size:0.8rem; opacity:0.95;">이 셀프 공정이 내 현장 상황에 맞는지 인공지능이 10초 만에 진단해 드립니다.</p>
+                </div>
+                <i class="fa-solid fa-chevron-right" style="font-size:1.1rem; color:white;"></i>
+            </div>
+        </div>
+    `;
+    
+    // 본문의 절반 위치 혹은 2번째 H2 헤더 위치에 CTA를 삽입
+    const headings = html.split('<h2 class="article-h2-heading"');
+    if (headings.length > 2) {
+        // 2번째 헤더 바로 앞에 CTA 삽입
+        headings[1] = headings[1] + ctaHtml;
+        html = headings.join('<h2 class="article-h2-heading"');
+    } else {
+        // 단락이 적은 경우 본문 맨 뒤에 덧붙임
+        html += ctaHtml;
+    }
+
+    return html;
+}
+
+// 6. 아티클 상세 뷰 렌더링 & H2 목차 자동 생성
+function renderArticleDetailView(slug) {
+    const article = guideArticles.find(art => art.slug === slug);
+    if (!article) {
+        showToast("존재하지 않는 아티클입니다.");
+        navigate('guide');
+        return;
+    }
+    
+    // 1. SEO 메타 실시간 최적화
+    updateSEOMeta(article.title, article.description, article.ogImage);
+    
+    // 2. 카테고리 뱃지 업데이트
+    const badge = document.getElementById('detail-category-badge');
+    if (badge) {
+        badge.innerText = article.category;
+        badge.style.background = article.category === '결로/곰팡이' ? '#e53e3e' : 
+                                 (article.category === '단열' ? '#3182ce' : 
+                                 (article.category === '욕실' ? '#319795' : '#805ad5'));
+    }
+    
+    // 3. 목차 생성 (H2 기반 추출)
+    const tocList = document.getElementById('article-toc-list');
+    const tocBox = document.getElementById('article-toc-box');
+    
+    // H2 헤더 추출 매칭
+    const h2Regex = /^##\s+(.+)$/gm;
+    const matches = [...article.content.matchAll(h2Regex)];
+    
+    if (matches.length > 0 && tocList && tocBox) {
+        tocBox.style.display = 'block';
+        tocList.innerHTML = matches.map(match => {
+            const headingText = match[1];
+            return `
+                <li style="margin-bottom:6px;">
+                    <a href="#heading-${headingText}" onclick="event.preventDefault(); document.getElementById('heading-${headingText}').scrollIntoView({ behavior: 'smooth' });" style="color:#4a5568; font-weight:700; text-decoration:none; cursor:pointer;">
+                        ${headingText}
+                    </a>
+                </li>
+            `;
+        }).join('');
+    } else {
+        if (tocBox) tocBox.style.display = 'none';
+    }
+    
+    // 4. 본문 파싱 및 렌더링
+    const bodyArea = document.getElementById('article-body-area');
+    if (bodyArea) {
+        bodyArea.innerHTML = parseMarkdown(article.content);
+    }
+    
+    // 5. 하단 관련 아티클 3개 추천
+    const recommendList = document.getElementById('article-recommend-list');
+    if (recommendList) {
+        // 현재 아티클을 제외한 동일 카테고리 또는 다른 아티클 3개
+        const related = guideArticles
+            .filter(art => art.slug !== slug)
+            .sort(() => 0.5 - Math.random()) // 랜덤 셔플로 순환 유도
+            .slice(0, 3);
+            
+        recommendList.innerHTML = related.map(rel => `
+            <div class="card" onclick="navigate('guide-detail', { slug: '${rel.slug}' })" style="display:flex; gap:10px; padding:10px; cursor:pointer; align-items:center; border-color:var(--border-color); background:#fcfdff; transition:all 0.2s ease;">
+                <img src="${rel.thumbnail}" alt="${rel.title}" onerror="this.onerror=null; this.src=getFallbackImage('${rel.category}')" style="width:50px; height:50px; border-radius:8px; object-fit:cover;">
+                <div style="flex:1; text-align:left;">
+                    <span style="font-size:0.6rem; color:#718096; background:#e2e8f0; padding:1px 4px; border-radius:3px; font-weight:800; display:inline-block; margin-bottom:2px;">${rel.category}</span>
+                    <h4 style="margin:0; font-size:0.78rem; font-weight:800; color:var(--text-main); line-height:1.2; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:220px;">${rel.title}</h4>
+                </div>
+                <i class="fa-solid fa-chevron-right" style="color:var(--text-sub); font-size:0.75rem;"></i>
+            </div>
+        `).join('');
+    }
+    
+    // 상단으로 부드럽게 스크롤링
+    const wrapper = document.querySelector('.app-wrapper');
+    if (wrapper) wrapper.scrollTop = 0;
+}
+
+// ==========================================
+// 🤝 안심 전문가 매칭 비즈니스 로직 및 엔진
+// ==========================================
+
+// 1. 전문가 데이터베이스 (기본 검증 전문가 3인)
+const expertPartners = [
+    {
+        id: "expert-1",
+        name: "탑 클래스 결로방수 테크",
+        ceo: "김진수 마스터",
+        specialty: "결로/곰팡이",
+        license: "105-82-99000",
+        region: "서울특별시 전체",
+        rating: 4.9,
+        reviews: 142,
+        projectsCount: 380,
+        badge: true,
+        desc: "독일제 친환경 약품과 특허받은 고기밀 단열 이보드 시공 전문입니다. 하자가 발생할 경우 3년간 무상 보증을 지원합니다."
+    },
+    {
+        id: "expert-2",
+        name: "명성 기밀 단열 엔지니어링",
+        ceo: "최태호 대표",
+        specialty: "단열 시공",
+        license: "212-14-88400",
+        region: "경기도 경기남부",
+        rating: 4.8,
+        reviews: 98,
+        projectsCount: 210,
+        badge: true,
+        desc: "외벽 크랙 보수부터 내벽 우레탄 기밀 폼 시공까지, 빈틈없는 정석 열교 차단을 고집합니다."
+    },
+    {
+        id: "expert-3",
+        name: "안심 바닥 미장 디자인",
+        ceo: "박건우 소장",
+        specialty: "바닥/장판",
+        region: "인천광역시 전체",
+        rating: 4.7,
+        reviews: 74,
+        projectsCount: 155,
+        badge: false,
+        desc: "미장 수평 샌딩과 수성 친환경 친화 장판 시공 전문입니다. 들뜸 없는 바탕 정석 작업에 자부심을 가집니다."
+    }
+];
+
+// 2. 가상의 견적 제안 데이터
+const mockExpertOffers = {
+    "expert-1": {
+        price: 1850000,
+        schedule: "1주일 내 시공 가능",
+        message: "현장 분석 결과 단열 노후가 큽니다. 이보드 13T 및 기밀 폼 시공 포함한 3년 무상보증 견적입니다. 친절히 모시겠습니다."
+    },
+    "expert-2": {
+        price: 1950000,
+        schedule: "10일 내 시공 가능",
+        message: "독일식 친환경 열교 단열 처리를 통해 원천 차단해 드립니다. 시공 전 누수 검침 서비스는 무료로 제공됩니다."
+    }
+};
+
+// 3. 사용자 매칭 신청 내역 전역 로드 및 상태
+let userMatchingRequests = JSON.parse(localStorage.getItem('selin_matching_requests') || '[]');
+
+// 4. 시/도별 군/구 딕셔너리
+const regionalGungus = {
+    seoul: ["강남구", "마포구", "서초구", "송파구", "강동구", "영등포구", "용산구"],
+    gyeonggi: ["성남시 분당구", "수원시 영통구", "고양시 일산동구", "용인시 수지구", "안양시 동안구"],
+    incheon: ["송도국제도시", "부평구", "남동구", "서구 청라"]
+};
+
+// 5. 시/도 선택에 따른 군/구 셀렉트 옵션 업데이트
+function updateMatchGunguOptions() {
+    const regionSido = document.getElementById('match-region-sido');
+    const regionGungu = document.getElementById('match-region-gungu');
+    if (!regionSido || !regionGungu) return;
+    
+    const selectedSido = regionSido.value;
+    const gungus = regionalGungus[selectedSido] || [];
+    
+    regionGungu.innerHTML = gungus.map(g => `<option value="${g}">${g}</option>`).join('');
+}
+
+// 6. 가상 사진 업로드 미리보기 등록
+let matchUploadedPhotos = [];
+function handleMatchPhotoSelect() {
+    const input = document.getElementById('match-photo-input');
+    const list = document.getElementById('match-photo-preview-list');
+    if (!input || !input.files || !list) return;
+    
+    const file = input.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            matchUploadedPhotos.push(e.target.result);
+            list.innerHTML += `
+                <div style="position:relative; width:60px; height:60px; border-radius:8px; overflow:hidden; border:1px solid #edf2f7;">
+                    <img src="${e.target.result}" style="width:100%; height:100%; object-fit:cover;">
+                </div>
+            `;
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+// 7. 안심 매칭 신청서 제출 및 가상 리스너 엔진 구동 (10초 뒤 견적 도착)
+function submitMatchRequest() {
+    const constType = document.getElementById('match-construction-type').value;
+    const regionSido = document.getElementById('match-region-sido');
+    const regionSidoText = regionSido ? regionSido.options[regionSido.selectedIndex].text : "서울특별시";
+    const regionGungu = document.getElementById('match-region-gungu').value;
+    const schedule = document.getElementById('match-schedule');
+    const scheduleText = schedule ? schedule.options[schedule.selectedIndex].text : "최대한 빨리";
+    const budget = document.getElementById('match-budget-limit');
+    const budgetText = budget ? budget.options[budget.selectedIndex].text : "협의 필요";
+    const details = document.getElementById('match-details').value.trim();
+    
+    const typeLabelMap = {
+        'mold': '결로/곰팡이 하자 보수',
+        'insulation': '정밀 단열 시공',
+        'bathroom': '욕실 방수 및 타일',
+        'floor': '바닥/장판 교체',
+        'wall': '벽체 목공/도배/페인트',
+        'full': '원인 분석 및 종합 시공'
+    };
+    
+    const newRequest = {
+        id: `req-${Date.now()}`,
+        type: constType,
+        typeLabel: typeLabelMap[constType] || "하자 원인 시공",
+        region: `${regionSidoText} ${regionGungu}`,
+        schedule: scheduleText,
+        budget: budgetText,
+        details: details || "하자 정밀 복구 및 안심 보수 요청",
+        photos: [...matchUploadedPhotos],
+        status: "접수중", // 접수중 -> 견적 도착 -> 전문가 선택 완료 -> 시공 완료
+        createdAt: new Date().toLocaleDateString(),
+        offers: [],
+        selectedExpert: null,
+        contractPrice: 0
+    };
+    
+    userMatchingRequests.unshift(newRequest);
+    localStorage.setItem('selin_matching_requests', JSON.stringify(userMatchingRequests));
+    
+    // 모달 초기화
+    matchUploadedPhotos = [];
+    const list = document.getElementById('match-photo-preview-list');
+    if (list) list.innerHTML = '';
+    const form = document.getElementById('expert-match-form');
+    if (form) form.reset();
+    
+    showToast("안심 매칭 신청이 정상 완료되었습니다! 24시간 내 최적의 전문가 견적이 도착합니다.");
+    navigate('myplan');
+    
+    // 💡 시각 효과 체감 시뮬레이터: 10초 뒤 자동으로 견적 2개 도착 처리!
+    setTimeout(() => {
+        const req = userMatchingRequests.find(r => r.id === newRequest.id);
+        if (req && req.status === "접수중") {
+            req.status = "견적 도착";
+            req.offers = [
+                {
+                    expertId: "expert-1",
+                    expertName: "탑 클래스 결로방수 테크",
+                    price: mockExpertOffers["expert-1"].price,
+                    schedule: mockExpertOffers["expert-1"].schedule,
+                    message: mockExpertOffers["expert-1"].message,
+                    rating: 4.9
+                },
+                {
+                    expertId: "expert-2",
+                    expertName: "명성 기밀 단열 엔지니어링",
+                    price: mockExpertOffers["expert-2"].price,
+                    schedule: mockExpertOffers["expert-2"].schedule,
+                    message: mockExpertOffers["expert-2"].message,
+                    rating: 4.8
+                }
+            ];
+            
+            localStorage.setItem('selin_matching_requests', JSON.stringify(userMatchingRequests));
+            showToast("🔔 띵동! 신청하신 안심 전문가 견적이 2건 도착했습니다. 마이페이지에서 확인해보세요!");
+            
+            // 만약 현재 마이페이지가 열려있다면 즉시 갱신
+            const myplanView = document.getElementById('view-myplan');
+            if (myplanView && myplanView.classList.contains('active')) {
+                renderMatchingStatus();
+            }
+        }
+    }, 10000);
+}
+
+// 8. 마이페이지 전문가 매칭 현황 4단계 시각화 렌더러
+function renderMatchingStatus() {
+    const container = document.getElementById('matching-status-container');
+    if (!container) return;
+    
+    if (userMatchingRequests.length === 0) {
+        container.innerHTML = `
+            <div style="padding:30px 10px; text-align:center; color:var(--text-sub);">
+                <i class="fa-solid fa-clipboard-list" style="font-size:2rem; margin-bottom:8px; opacity:0.4;"></i>
+                <p style="margin:0; font-size:0.8rem; font-weight:700;">신청하신 전문가 매칭 견적서가 없습니다.</p>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = userMatchingRequests.map(req => {
+        // 프로그레스 바 상태 매핑
+        const steps = ["접수중", "견적 도착", "전문가 선택 완료", "시공 완료"];
+        const currentIndex = steps.indexOf(req.status);
+        
+        let progressHtml = `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; position:relative; padding:0 8px;">
+                <div style="position:absolute; left:20px; right:20px; height:3px; background:#e2e8f0; top:12px; z-index:1;"></div>
+                <div style="position:absolute; left:20px; width:${(currentIndex / 3) * 100}%; height:3px; background:var(--primary); top:12px; z-index:1; transition:width 0.4s ease;"></div>
+        `;
+        
+        steps.forEach((step, idx) => {
+            const isActive = idx <= currentIndex;
+            const isCurrent = idx === currentIndex;
+            
+            progressHtml += `
+                <div style="display:flex; flex-direction:column; align-items:center; z-index:2; position:relative;">
+                    <div style="width:24px; height:24px; border-radius:50%; background:${isCurrent ? 'var(--primary)' : (isActive ? 'var(--primary-light)' : '#cbd5e0')}; color:white; display:flex; justify-content:center; align-items:center; font-size:0.65rem; font-weight:900; box-shadow: ${isCurrent ? '0 0 10px rgba(255,112,67,0.4)' : 'none'};">
+                        ${idx + 1}
+                    </div>
+                    <span style="font-size:0.68rem; font-weight:${isActive ? '800' : '500'}; color:${isActive ? 'var(--text-main)' : 'var(--text-sub)'}; margin-top:6px;">${step}</span>
+                </div>
+            `;
+        });
+        progressHtml += `</div>`;
+        
+        // 상태별 추가 액션 또는 견적 카드 노출
+        let actionAreaHtml = "";
+        
+        if (req.status === "접수중") {
+            actionAreaHtml = `
+                <div style="background:#f8fafc; border-radius:10px; padding:12px; text-align:center; font-size:0.78rem; color:#718096; border:1px solid #edf2f7; display:flex; align-items:center; justify-content:center; gap:8px;">
+                    <span style="display:inline-block; width:8px; height:8px; background:#ecc94b; border-radius:50%; animation:pulse 1.2s infinite;"></span>
+                    셀인케어 소속 파트너들이 견적을 산출 중입니다. 조금만 기다려주세요! (약 10초)
+                </div>
+            `;
+        } 
+        else if (req.status === "견적 도착") {
+            actionAreaHtml = `
+                <div style="margin-top:10px;">
+                    <h5 style="margin:0 0 8px 0; font-size:0.8rem; font-weight:800; color:#2c3e50;"><i class="fa-solid fa-bell" style="color:#ecc94b;"></i> 맞춤 파트너 견적서 도착 (${req.offers.length}건)</h5>
+                    <div style="display:flex; flex-direction:column; gap:10px;">
+                        ${req.offers.map(offer => `
+                            <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:16px; text-align:left; box-shadow:var(--shadow-sm);">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                                    <strong style="font-size:0.85rem; color:var(--text-main);"><i class="fa-solid fa-medal" style="color:#ffb74d;"></i> ${offer.expertName}</strong>
+                                    <span style="font-size:0.75rem; color:#d69e2e; font-weight:800;"><i class="fa-solid fa-star"></i> ${offer.rating}</span>
+                                </div>
+                                <p style="margin:0 0 10px 0; font-size:0.78rem; color:#4a5568; line-height:1.4;">${offer.message}</p>
+                                <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #edf2f7; padding-top:10px;">
+                                    <div>
+                                        <span style="font-size:0.7rem; color:var(--text-sub); display:block;">희망 견적가</span>
+                                        <strong style="font-size:1.05rem; color:#e53e3e; font-weight:900;">${offer.price.toLocaleString()} 원</strong>
+                                    </div>
+                                    <button class="btn btn-primary btn-small" onclick="selectExpertOffer('${req.id}', '${offer.expertName}', ${offer.price})" style="background:#319795; padding:6px 12px; border-radius:6px; font-size:0.75rem;">
+                                        이 파트너 선택하기
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        else if (req.status === "전문가 선택 완료") {
+            actionAreaHtml = `
+                <div style="background:#ebf8ff; border:1px solid #bee3f8; border-radius:12px; padding:16px; text-align:left; box-shadow:var(--shadow-sm);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <span style="font-size:0.7rem; font-weight:800; color:#2b6cb0; background:#bee3f8; padding:2px 6px; border-radius:4px;">매칭 계약 체결</span>
+                        <strong style="font-size:0.9rem; color:#2b6cb0;">${req.selectedExpert}</strong>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; font-size:0.78rem; color:#4a5568; margin-bottom:12px;">
+                        <span>최종 조율된 계약 금액</span>
+                        <strong style="color:var(--text-main); font-weight:800;">${req.contractPrice.toLocaleString()} 원</strong>
+                    </div>
+                    
+                    <button class="btn btn-primary" onclick="confirmMatchExecutionCompleted('${req.id}')" style="width:100%; justify-content:center; background:#319795; border:none; padding:10px; font-weight:800; font-size:0.8rem; border-radius:8px;">
+                        <i class="fa-solid fa-circle-check"></i> 공사완료 확정하기 (계약 성사 확인)
+                    </button>
+                </div>
+            `;
+        }
+        else if (req.status === "시공 완료") {
+            const fee = Math.floor(req.contractPrice * 0.08); // 매칭 수수료 8% 정책
+            actionAreaHtml = `
+                <div style="background:#f0fff4; border:1px solid #c6f6d5; border-radius:12px; padding:16px; text-align:left;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid #c6f6d5; padding-bottom:8px;">
+                        <span style="font-size:0.7rem; font-weight:800; color:#22543d; background:#c6f6d5; padding:2px 6px; border-radius:4px;"><i class="fa-solid fa-circle-check"></i> 안심 시공 보수 완료</span>
+                        <span style="font-size:0.72rem; color:#4a5568; font-weight:700;">완료일: ${req.createdAt}</span>
+                    </div>
+                    <p style="margin:0 0 10px 0; font-size:0.78rem; color:#276749; line-height:1.45;">
+                        🎉 시공이 하자 없이 성공적으로 마무리되었습니다! 탑 파트너 <b>${req.selectedExpert}</b>에 의해 안전하게 하자가 잡혔습니다.
+                    </p>
+                    
+                    <!-- 매칭 성사 수수료 영수증 부서 -->
+                    <div style="background:white; border-radius:8px; padding:12px; border:1px solid #e2e8f0; font-size:0.72rem;">
+                        <div style="display:flex; justify-content:space-between; color:#4a5568; margin-bottom:4px;">
+                            <span>시공 계약 원금</span>
+                            <span>${req.contractPrice.toLocaleString()}원</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; color:#4a5568; margin-bottom:4px;">
+                            <span>플랫폼 매칭 수수료율</span>
+                            <span style="font-weight:700; color:#319795;">8%</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; color:#2d3748; font-weight:900; border-top:1px dashed #edf2f7; padding-top:6px; margin-top:6px; font-size:0.78rem;">
+                            <span>수수료 부과 예정액 (파트너 청구)</span>
+                            <span style="color:#e53e3e;">${fee.toLocaleString()}원</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        return `
+            <div class="card" style="padding:16px; margin-bottom:16px; border-color:#e2e8f0; text-align:left; background:#ffffff;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                    <div>
+                        <span style="font-size:0.65rem; font-weight:800; color:white; background:var(--primary); padding:2px 6px; border-radius:4px; margin-right:4px;">${req.typeLabel}</span>
+                        <span style="font-size:0.7rem; color:#718096;"><i class="fa-solid fa-location-dot"></i> ${req.region}</span>
+                    </div>
+                    <span style="font-size:0.7rem; color:#a0aec0;">${req.createdAt}</span>
+                </div>
+                
+                <!-- 4단계 진행 바 -->
+                ${progressHtml}
+                
+                <!-- 세부 디테일 액션 -->
+                ${actionAreaHtml}
+            </div>
+        `;
+    }).join('');
+}
+
+// 9. 견적 도착한 파트너 중 최종 전문가 수락
+function selectExpertOffer(requestId, expertName, price) {
+    const req = userMatchingRequests.find(r => r.id === requestId);
+    if (!req) return;
+    
+    req.status = "전문가 선택 완료";
+    req.selectedExpert = expertName;
+    req.contractPrice = price;
+    
+    localStorage.setItem('selin_matching_requests', JSON.stringify(userMatchingRequests));
+    showToast(`🎉 ${expertName} 파트너를 최종 낙찰 및 계약 체결하였습니다!`);
+    
+    renderMatchingStatus();
+}
+
+// 10. 시공 완료 수동 확정 및 수수료 정책 고지
+function confirmMatchExecutionCompleted(requestId) {
+    const req = userMatchingRequests.find(r => r.id === requestId);
+    if (!req) return;
+    
+    if (confirm("정말로 시공 보수가 하자가 없이 완료되었습니까?\n확정 시 최종 계약 금액에 의거해 수수료 청구서가 발부됩니다.")) {
+        req.status = "시공 완료";
+        
+        localStorage.setItem('selin_matching_requests', JSON.stringify(userMatchingRequests));
+        showToast("👍 축하합니다! 시공 완료 승인이 무사히 마무리되었습니다.");
+        
+        renderMatchingStatus();
+    }
+}
+
+// 11. 안심 검증 전문가 목록 렌더러 (view-match-list)
+function renderExpertCards() {
+    const container = document.getElementById('expert-cards-container');
+    if (!container) return;
+    
+    container.innerHTML = expertPartners.map(exp => `
+        <div class="card" style="padding:20px; text-align:left; background:white; border-color:var(--border-color); display:flex; gap:16px; flex-direction:column; position:relative;">
+            
+            <!-- 골드 검증 뱃지 -->
+            ${exp.badge ? `
+                <div style="position:absolute; top:20px; right:20px; background:#ecc94b; color:#1a202c; font-size:0.62rem; font-weight:900; padding:4px 8px; border-radius:6px; display:flex; align-items:center; gap:4px; box-shadow:0 4px 10px rgba(236,201,75,0.25);">
+                    <i class="fa-solid fa-award"></i> 셀인케어 인증 전문가
+                </div>
+            ` : ''}
+
+            <div style="display:flex; gap:14px; align-items:center;">
+                <div style="width:50px; height:50px; border-radius:50%; background:#f7fafc; display:flex; justify-content:center; align-items:center; border:1px solid #e2e8f0; font-size:1.4rem; color:var(--primary);">
+                    <i class="fa-solid fa-user-tie"></i>
+                </div>
+                <div>
+                    <h3 style="margin:0 0 4px 0; font-size:0.95rem; font-weight:800; color:var(--text-main);">${exp.name}</h3>
+                    <div style="display:flex; align-items:center; gap:6px; font-size:0.75rem; color:var(--text-sub);">
+                        <span>${exp.ceo}</span>
+                        <span>•</span>
+                        <span style="color:#d69e2e; font-weight:800;"><i class="fa-solid fa-star"></i> ${exp.rating} (${exp.reviews}리뷰)</span>
+                    </div>
+                </div>
+            </div>
+            
+            <p style="margin:0; font-size:0.78rem; color:#4a5568; line-height:1.45;">${exp.desc}</p>
+            
+            <div style="display:flex; flex-wrap:wrap; gap:6px; font-size:0.7rem;">
+                <span style="background:#ebf8ff; color:#2b6cb0; padding:2px 6px; border-radius:4px; font-weight:700;"><i class="fa-solid fa-wrench"></i> ${exp.specialty} 전문</span>
+                <span style="background:#f7fafc; color:#4a5568; padding:2px 6px; border-radius:4px; font-weight:700;"><i class="fa-solid fa-location-dot"></i> 시공지역: ${exp.region}</span>
+                <span style="background:#e6fffa; color:#234e52; padding:2px 6px; border-radius:4px; font-weight:700;"><i class="fa-solid fa-clipboard-check"></i> 누적 시공 ${exp.projectsCount}건</span>
+            </div>
+
+            <button class="btn btn-primary" onclick="navigate('match-form')" style="width:100%; justify-content:center; padding:10px; font-size:0.8rem; border-radius:8px; font-weight:800; background:#319795; border:none;">
+                이 전문가에게 직접 견적 요청하기 →
+            </button>
+        </div>
+    `).join('');
+}
+
+// 12. 파트너 신청 등록 및 관리 (view-admin-expert)
+function registerExpertPartner() {
+    const name = document.getElementById('reg-expert-name').value.trim();
+    const ceo = document.getElementById('reg-expert-ceo').value.trim();
+    const license = document.getElementById('reg-expert-license').value.trim();
+    const specialty = document.getElementById('reg-expert-specialty').value;
+    const region = document.getElementById('reg-expert-region').value;
+    
+    if (!name || !ceo || !license) {
+        alert("모든 빈칸을 채워주세요.");
+        return;
+    }
+    
+    const newExpert = {
+        id: `expert-${Date.now()}`,
+        name: name,
+        ceo: ceo,
+        specialty: specialty,
+        license: license,
+        region: region,
+        rating: 5.0,
+        reviews: 0,
+        projectsCount: 0,
+        badge: true, // 즉시 승인이므로 인증 뱃지 활성
+        desc: `셀인케어의 실시간 3단계 인증 심사를 즉시 패스한 검증된 파트너입니다. 대표 ${ceo}의 직영 책임 시공을 약속합니다.`
+    };
+    
+    expertPartners.unshift(newExpert);
+    
+    const form = document.getElementById('expert-register-form');
+    if (form) form.reset();
+    
+    showToast(`🏢 [파트너 가입 완료] '${name}' 전문가 브랜드가 즉시 승인 및 골드 등급으로 등록되었습니다!`);
+    
+    renderAdminExpertList();
+    renderExpertCards();
+}
+
+// 13. 관리자 대시보드 리스트 렌더러
+function renderAdminExpertList() {
+    const container = document.getElementById('admin-expert-list-container');
+    if (!container) return;
+    
+    container.innerHTML = expertPartners.map(exp => `
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px; font-size:0.75rem; text-align:left; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+                <strong style="font-size:0.8rem; color:var(--text-main); display:block;">
+                    ${exp.name} ${exp.badge ? '<span style="color:#ecc94b; font-size:0.6rem;">★ 골드 인증</span>' : ''}
+                </strong>
+                <span style="color:var(--text-sub);">대표: ${exp.ceo} | 분야: ${exp.specialty} | ${exp.region}</span>
+            </div>
+            <div style="text-align:right;">
+                <span style="background:#e2e8f0; color:#4a5568; padding:2px 6px; border-radius:4px; font-size:0.65rem; font-weight:800; display:block; margin-bottom:4px;">매칭 수수료: 8%</span>
+                <span style="color:#38a169; font-weight:700;">정상 승인 완료</span>
+            </div>
+        </div>
+    `).join('');
+}
+

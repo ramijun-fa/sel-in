@@ -13,6 +13,79 @@
 <body>
     <!-- 모바일 화면을 PC 중앙에 띄우기 위한 래퍼 -->
     <div class="app-wrapper">
+        <!-- 첫 진입 시 3단계 온보딩 슬라이드 (z-index: 9999로 뷰포트를 다 덮음) -->
+        <section id="view-onboarding" style="display: none;">
+            <div class="onboarding-slider">
+                <!-- 슬라이드 1: 앱 소개 -->
+                <div class="onboarding-slide active" id="onboard-slide-1">
+                    <div class="onboarding-illustration">
+                        <i class="fa-solid fa-house-chimney-user"></i>
+                    </div>
+                    <h2>셀프 인테리어,<br>AI가 도와드려요 🛠️</h2>
+                    <p>어려운 공정 순서부터 자재 수량 계산까지, 인테리어의 모든 고민을 AI 훈대표 지식 엔진이 한 번에 해결해 드립니다.</p>
+                </div>
+                <!-- 슬라이드 2: 프로세스 시각화 -->
+                <div class="onboarding-slide" id="onboard-slide-2">
+                    <div class="onboarding-illustration">
+                        <i class="fa-solid fa-route" style="color: var(--primary);"></i>
+                    </div>
+                    <h2>물 흐르듯 쉬운<br>3단계 프로세스 🔄</h2>
+                    <p>셀인케어가 제안하는 안전하고 확실한 가이드를 따라 차근차근 셀프 시공을 진행해 보세요.</p>
+                    <div class="flow-diagram">
+                        <div class="flow-step">
+                            <div class="flow-step-icon">1</div>
+                            <div class="flow-step-text">
+                                <strong>맞춤 공정 계획</strong>
+                                <span>현장 상태 진단 및 맞춤형 타임라인 설계</span>
+                            </div>
+                        </div>
+                        <div class="flow-step">
+                            <div class="flow-step-icon">2</div>
+                            <div class="flow-step-text">
+                                <strong>자재 & 예산 계산</strong>
+                                <span>로스율 반영 수량 산출 및 시장가 비용 대조</span>
+                            </div>
+                        </div>
+                        <div class="flow-step">
+                            <div class="flow-step-icon">3</div>
+                            <div class="flow-step-text">
+                                <strong>전문가 1:1 코칭</strong>
+                                <span>하자 위험도를 완벽히 잡는 전문가 피드백</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- 슬라이드 3: 시작/소셜로그인 CTA -->
+                <div class="onboarding-slide" id="onboard-slide-3">
+                    <div class="onboarding-illustration">
+                        <i class="fa-solid fa-circle-check" style="color: var(--primary);"></i>
+                    </div>
+                    <h2>준비되셨나요? 🚀</h2>
+                    <p>카카오 로그인으로 프로젝트를 실시간 연동하고 영구 안전 보관을 시작해 보세요.</p>
+                    <div style="width: 100%; margin-top: 24px; display: flex; flex-direction: column; gap: 12px; padding: 0 10px;">
+                        <button class="btn-kakao" onclick="openKakaoLogin()">
+                            <i class="fa-solid fa-comment"></i>
+                            <span>카카오로 3초만에 시작</span>
+                        </button>
+                        <button class="btn btn-secondary" onclick="skipOnboarding()" style="justify-content: center; width: 100%; border-color: var(--secondary-dark);">
+                            로그인 없이 먼저 둘러보기
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="onboarding-footer">
+                <div class="onboarding-dots">
+                    <div class="onboarding-dot active" onclick="setOnboardingSlide(1)"></div>
+                    <div class="onboarding-dot" onclick="setOnboardingSlide(2)"></div>
+                    <div class="onboarding-dot" onclick="setOnboardingSlide(3)"></div>
+                </div>
+                <div class="onboarding-btn-group" id="onboard-nav-buttons">
+                    <button class="btn btn-secondary" onclick="skipOnboarding()" style="flex: 1; justify-content: center; padding: 12px; font-size: 0.9rem;">건너뛰기</button>
+                    <button class="btn btn-primary" onclick="nextOnboardingSlide()" style="flex: 1; justify-content: center; padding: 12px; font-size: 0.9rem;" id="btn-onboard-next">다음 <i class="fa-solid fa-arrow-right"></i></button>
+                </div>
+            </div>
+        </section>
+
         <!-- 모바일 뷰포트 -->
         <div class="mobile-viewport">
             
@@ -21,8 +94,13 @@
                 <div class="logo">
                     <i class="fa-solid fa-house-chimney-user"></i> 셀인케어
                 </div>
-                <div class="menu-btn">
-                    <i class="fa-solid fa-bars"></i>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div id="user-profile-area" style="display: flex; align-items: center; gap: 8px;">
+                        <!-- JS에서 동적 로그인/프로필 아바타 렌더링 -->
+                    </div>
+                    <div class="menu-btn">
+                        <i class="fa-solid fa-bars"></i>
+                    </div>
                 </div>
             </header>
 
@@ -32,42 +110,53 @@
                 <!-- 뷰: 홈 화면 -->
                 <section id="view-home" class="view-section active">
                     <!-- 1. 핵심 헤드라인 -->
-                    <div class="hero-section">
-                        <h1>셀프 인테리어,<br>무작정 하지 마세요.</h1>
-                        <p>AI가 예산·공정·위험까지<br>함께 분석해드립니다.</p>
+                    <div class="hero-section" style="padding-bottom: 5px;">
+                        <h1 id="user-welcome-title">셀프 인테리어,<br>무작정 하지 마세요.</h1>
+                        <p id="user-welcome-sub">AI가 예산·공정·위험까지<br>함께 분석해드립니다.</p>
                     </div>
+
+                    <!-- 로그인 유도 배너 (비로그인 상태 시 동적 표시) -->
+                    <div id="login-suggest-banner-container"></div>
                     
-                    <!-- 현재 작업 중인 프로젝트 상단 표시 -->
-                    <div id="current-project-card" class="q-card" style="margin:20px; margin-bottom:0; background-color: #EBF8FF; border-color: #BEE3F8; display:flex; justify-content:space-between; align-items:center;">
-                        <div>
-                            <h3 id="current-project-name" style="margin:0; font-size:1rem; color:#2B6CB0;">새 프로젝트 (작성 중)</h3>
-                            <p style="margin:4px 0 0 0; font-size:0.8rem; color:#2C5282;" id="current-project-status">상태: 미저장</p>
-                        </div>
-                        <button class="btn btn-primary btn-small" onclick="openSaveModal()">저장</button>
-                    </div>
+                    <!-- 현재 작업 중인 프로젝트 상단 표시 (동적으로 카드 or Empty State 노출) -->
+                    <div id="home-project-area"></div>
 
                     <!-- 2. 메인 CTA 버튼 3개 -->
                     <div class="cta-section">
-                        <button class="btn btn-primary btn-large" onclick="navigate('problem')">
+                        <!-- CTA 1: 문제 해결 시작하기 -->
+                        <button class="btn btn-primary btn-large cta-card-btn" onclick="navigate('problem')">
                             <div class="btn-content">
-                                <i class="fa-solid fa-clipboard-check"></i>
-                                <span>문제 해결 시작하기</span>
+                                <i class="fa-solid fa-clipboard-check cta-icon"></i>
+                                <div class="cta-text-group">
+                                    <span class="cta-title">문제 해결 시작하기</span>
+                                    <span class="cta-subtitle">결로·곰팡이·누수 등 증상별 해결법</span>
+                                </div>
                             </div>
-                            <i class="fa-solid fa-chevron-right"></i>
+                            <i class="fa-solid fa-chevron-right arrow-icon"></i>
                         </button>
-                        <button class="btn btn-secondary btn-large" onclick="navigate('budget')">
+                        
+                        <!-- CTA 2: 예산으로 계획 세우기 -->
+                        <button class="btn btn-secondary btn-large cta-card-btn" onclick="navigate('budget')">
                             <div class="btn-content">
-                                <i class="fa-solid fa-calculator"></i>
-                                <span>예산으로 계획 세우기</span>
+                                <i class="fa-solid fa-calculator cta-icon secondary"></i>
+                                <div class="cta-text-group">
+                                    <span class="cta-title">예산으로 계획 세우기</span>
+                                    <span class="cta-subtitle">내 예산에 딱 맞는 공정 자동 설계</span>
+                                </div>
                             </div>
-                            <i class="fa-solid fa-chevron-right"></i>
+                            <i class="fa-solid fa-chevron-right arrow-icon secondary"></i>
                         </button>
-                        <button class="btn btn-secondary btn-large" onclick="navigate('diagnosis')">
+                        
+                        <!-- CTA 3: 셀프로 가능한지 확인하기 -->
+                        <button class="btn btn-secondary btn-large cta-card-btn" onclick="navigate('diagnosis')">
                             <div class="btn-content">
-                                <i class="fa-solid fa-stethoscope"></i>
-                                <span>셀프로 가능한지 확인하기</span>
+                                <i class="fa-solid fa-stethoscope cta-icon secondary"></i>
+                                <div class="cta-text-group">
+                                    <span class="cta-title">셀프로 가능한지 확인하기</span>
+                                    <span class="cta-subtitle">난이도·위험도 분석 후 셀프 vs 전문가 판단</span>
+                                </div>
                             </div>
-                            <i class="fa-solid fa-chevron-right"></i>
+                            <i class="fa-solid fa-chevron-right arrow-icon secondary"></i>
                         </button>
                     </div>
 
@@ -85,31 +174,91 @@
                     <!-- 3. 인기 문제 카드 -->
                     <div class="content-section">
                         <h2 class="section-title">가장 많이 겪는 문제들</h2>
-                        <div class="scroll-row">
-                            <div class="card problem-card" onclick="navigate('detail')">
-                                <div class="card-icon"><i class="fa-solid fa-droplet-slash"></i></div>
-                                <h3>결로/곰팡이</h3>
-                                <p>단열 페인트와 기밀 시공법</p>
+                        <div class="scroll-row-container">
+                            <div class="scroll-row">
+                                <div class="card problem-card" onclick="navigate('detail')">
+                                    <div class="card-icon"><i class="fa-solid fa-droplet-slash"></i></div>
+                                    <h3>결로/곰팡이</h3>
+                                    <p>단열 페인트와 기밀 시공법</p>
+                                </div>
+                                <div class="card problem-card" onclick="navigate('detail')">
+                                    <div class="card-icon"><i class="fa-solid fa-temperature-arrow-up"></i></div>
+                                    <h3>단열 개선</h3>
+                                    <p>틈새 없는 단열재 부착</p>
+                                </div>
+                                <div class="card problem-card" onclick="navigate('detail')">
+                                    <div class="card-icon"><i class="fa-solid fa-bath"></i></div>
+                                    <h3>욕실 보수</h3>
+                                    <p>실리콘/줄눈 및 방수</p>
+                                </div>
+                                <div class="card problem-card" onclick="navigate('detail')">
+                                    <div class="card-icon"><i class="fa-solid fa-shoe-prints"></i></div>
+                                    <h3>장판/바닥</h3>
+                                    <p>들뜸 방지 및 평탄화</p>
+                                </div>
+                                <div class="card problem-card" onclick="navigate('detail')">
+                                    <div class="card-icon"><i class="fa-solid fa-paint-roller"></i></div>
+                                    <h3>벽체/도배/페인트</h3>
+                                    <p>퍼티 작업과 이음새 보수</p>
+                                </div>
                             </div>
-                            <div class="card problem-card" onclick="navigate('detail')">
-                                <div class="card-icon"><i class="fa-solid fa-temperature-arrow-up"></i></div>
-                                <h3>단열 개선</h3>
-                                <p>틈새 없는 단열재 부착</p>
+                        </div>
+                    </div>
+
+                    <!-- 최신 가이드 콘텐츠 섹션 (신규) -->
+                    <div class="content-section" style="margin-top: 25px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                            <h2 class="section-title" style="margin-bottom:0;">최신 셀프 시공 가이드 📚</h2>
+                            <span style="font-size:0.75rem; color:var(--primary); font-weight:700; cursor:pointer;" onclick="navigate('guide')">전체 보기 <i class="fa-solid fa-chevron-right"></i></span>
+                        </div>
+                        <div id="home-guide-container" style="display:flex; flex-direction:column; gap:12px;">
+                            <!-- JS로 최신 아티클 2~3개 노출 -->
+                        </div>
+                    </div>
+
+                    <!-- AI 분석 예시 보기 섹션 (신규) -->
+                    <div class="content-section" style="margin-top: 25px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                            <h2 class="section-title" style="margin-bottom:0;">AI 분석 리포트 미리보기 🔮</h2>
+                            <span style="font-size:0.75rem; color:var(--primary); font-weight:700;"><i class="fa-solid fa-sparkles"></i> 실제 분석 샘플</span>
+                        </div>
+                        <div class="ai-preview-card-wrapper" style="position:relative; border-radius:var(--radius-lg); overflow:hidden; border:1px solid var(--border-color); box-shadow:var(--shadow-md);">
+                            <!-- 샘플 카드 내용 (결로 해결 공정표 샘플) -->
+                            <div class="ai-preview-card" id="home-ai-preview-card" style="background:white; padding:20px; transition: filter 0.3s ease;">
+                                <div class="preview-badge-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; border-bottom:1px solid #edf2f7; padding-bottom:10px;">
+                                    <span class="preview-badge" style="font-size:0.75rem; font-weight:800; color:#3182ce; background:#ebf8ff; padding:4px 8px; border-radius:6px;"><i class="fa-solid fa-shield-halved"></i> NotebookLM AI 진단 예시</span>
+                                    <span style="color:#d69e2e; font-weight:800; font-size:0.75rem; display:flex; align-items:center; gap:4px;"><i class="fa-solid fa-circle-exclamation"></i> 결로/곰팡이 진단</span>
+                                </div>
+                                <h4 class="preview-title" style="font-size:1rem; font-weight:800; color:var(--text-main); margin:0 0 16px 0; line-height:1.4;">발코니 및 외벽 결로 해결 공정 계획서</h4>
+                                
+                                <div class="preview-section-item" style="margin-bottom:14px;">
+                                    <h5 style="font-size:0.8rem; font-weight:700; color:var(--text-main); margin:0 0 4px 0; display:flex; align-items:center; gap:6px;"><i class="fa-solid fa-magnifying-glass-chart" style="color:var(--primary);"></i> 문제 진단 요약</h5>
+                                    <p style="font-size:0.75rem; color:var(--text-sub); margin:0; line-height:1.45;">창가 외벽 모퉁이 단열 부족 및 실내 습도 불균형으로 인한 표면 결로 및 흑색 곰팡이 복합 발생</p>
+                                </div>
+
+                                <div class="preview-section-item" style="margin-bottom:14px;">
+                                    <h5 style="font-size:0.8rem; font-weight:700; color:var(--text-main); margin:0 0 6px 0; display:flex; align-items:center; gap:6px;"><i class="fa-solid fa-route" style="color:var(--primary);"></i> 추천 공정 설계 (3단계)</h5>
+                                    <div class="preview-steps" style="display:flex; flex-direction:column; gap:6px;">
+                                        <div class="p-step" style="font-size:0.72rem; color:var(--text-sub); display:flex; align-items:center; gap:6px;"><span style="width:16px; height:16px; border-radius:50%; background:var(--primary-light); color:white; display:inline-flex; align-items:center; justify-content:center; font-size:0.6rem; font-weight:800;">1</span> 곰팡이 제거 & 기밀 퍼티 작업</div>
+                                        <div class="p-step" style="font-size:0.72rem; color:var(--text-sub); display:flex; align-items:center; gap:6px;"><span style="width:16px; height:16px; border-radius:50%; background:var(--primary-light); color:white; display:inline-flex; align-items:center; justify-content:center; font-size:0.6rem; font-weight:800;">2</span> 복합 친환경 단열재(E-board) 기밀 밀착 부착</div>
+                                        <div class="p-step" style="font-size:0.72rem; color:var(--text-sub); display:flex; align-items:center; gap:6px;"><span style="width:16px; height:16px; border-radius:50%; background:var(--primary-light); color:white; display:inline-flex; align-items:center; justify-content:center; font-size:0.6rem; font-weight:800;">3</span> 수성 단열 페인트 3회 롤러 마감 도장</div>
+                                    </div>
+                                </div>
+
+                                <div class="preview-section-item">
+                                    <h5 style="font-size:0.8rem; font-weight:700; color:var(--text-main); margin:0 0 4px 0; display:flex; align-items:center; gap:6px;"><i class="fa-solid fa-dolly" style="color:var(--primary);"></i> 필수 자재 & 예상 단가</h5>
+                                    <p style="font-size:0.75rem; color:var(--text-sub); margin:0; line-height:1.45;">친환경 E-board 13T(14,000원), G2 단열 본드(22,000원), 일회용 우레탄 폼(6,000원)</p>
+                                </div>
                             </div>
-                            <div class="card problem-card" onclick="navigate('detail')">
-                                <div class="card-icon"><i class="fa-solid fa-bath"></i></div>
-                                <h3>욕실 보수</h3>
-                                <p>실리콘/줄눈 및 방수</p>
-                            </div>
-                            <div class="card problem-card" onclick="navigate('detail')">
-                                <div class="card-icon"><i class="fa-solid fa-shoe-prints"></i></div>
-                                <h3>장판/바닥</h3>
-                                <p>들뜸 방지 및 평탄화</p>
-                            </div>
-                            <div class="card problem-card" onclick="navigate('detail')">
-                                <div class="card-icon"><i class="fa-solid fa-paint-roller"></i></div>
-                                <h3>벽체/도배/페인트</h3>
-                                <p>퍼티 작업과 이음새 보수</p>
+
+                            <!-- 흐림 오버레이 및 CTA -->
+                            <div class="blur-overlay" id="preview-blur-overlay" style="position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.7); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); display:flex; align-items:center; justify-content:center; text-align:center; padding:20px; box-sizing:border-box; transition: opacity 0.3s ease;">
+                                <div class="blur-cta-box" style="max-width:280px; animation: fadeInUp 0.4s ease;">
+                                    <div style="width:48px; height:48px; border-radius:50%; background:#fff; display:inline-flex; align-items:center; justify-content:center; margin-bottom:12px; box-shadow:0 4px 10px rgba(0,0,0,0.1); color:var(--primary); font-size:1.2rem;"><i class="fa-solid fa-lock"></i></div>
+                                    <h4 style="font-size:0.95rem; font-weight:800; color:var(--text-main); margin:0 0 6px 0;">로그인 후 전체 보기</h4>
+                                    <p style="font-size:0.7rem; color:var(--text-sub); margin:0 0 16px 0; line-height:1.4;">소셜 로그인 하시면 AI 진단 리포트 원본과<br>맞춤 공정 설계를 무료로 볼 수 있어요!</p>
+                                    <button class="btn btn-primary" onclick="openKakaoLogin()" style="width:100%; justify-content:center; padding:10px; font-size:0.8rem; border-radius:8px;"><i class="fa-solid fa-comment" style="margin-right:6px;"></i> 카카오 3초 로그인</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -482,68 +631,37 @@
                             </div>
                         </div>
 
-                        <!-- 1. 요약 카드 -->
-                        <div class="report-card summary-card">
-                            <h3 class="card-title">기본 진단 요약</h3>
-                            <ul class="summary-list">
-                                <li><span class="label">해결 목적</span> <span class="value" id="res-problem">-</span></li>
-                                <li><span class="label">시공 공간</span> <span class="value" id="res-space">-</span></li>
-                                <li><span class="label">설정 예산</span> <span class="value" id="res-budget">-</span></li>
-                                <li><span class="label">셀프 가능성</span> <span class="value" id="res-self">-</span></li>
-                            </ul>
+                        <!-- [섹션 1]: 문제 진단 요약 (증상 → 원인 → 해결 방향) -->
+                        <div class="report-card" id="ai-section-diagnosis">
+                            <!-- JS에서 동적 삽입됨 -->
                         </div>
 
-                        <!-- 2. 위험도 분석 -->
-                        <div class="report-card">
-                            <h3 class="card-title">종합 위험도 평가</h3>
-                            <div class="risk-list">
-                                <div class="risk-item">
-                                    <span>결로 위험도</span>
-                                    <span class="badge" id="risk-condensation">-</span>
-                                </div>
-                                <div class="risk-item">
-                                    <span>누수 의심도</span>
-                                    <span class="badge" id="risk-leak">-</span>
-                                </div>
-                                <div class="risk-item">
-                                    <span>재발 위험도</span>
-                                    <span class="badge" id="risk-recurrence">-</span>
-                                </div>
-                                <div class="risk-item">
-                                    <span>셀프 난이도</span>
-                                    <span class="badge" id="risk-difficulty">-</span>
-                                </div>
-                            </div>
+                        <!-- [섹션 2]: 추천 공정 단계별 리스트 (순서, 소요 시간, 난이도 표시) -->
+                        <div class="report-card" id="ai-section-process">
+                            <!-- JS에서 동적 삽입됨 -->
                         </div>
 
-                        <!-- 4. 경고 메시지 (조건부 노출) -->
-                        <div class="report-card warning-card" id="warning-container" style="display:none;">
-                            <h3 class="card-title text-danger"><i class="fa-solid fa-triangle-exclamation"></i> 현장 특이사항 경고</h3>
-                            <ul class="warning-list" id="warning-list">
-                                <!-- JS에서 동적 삽입 -->
-                            </ul>
+                        <!-- [섹션 3]: 예상 자재 목록 + 수량 + 예상 단가 -->
+                        <div class="report-card" id="ai-section-materials">
+                            <!-- JS에서 동적 삽입됨 -->
                         </div>
 
-                        <!-- 3. 추천 해결 방향 -->
-                        <div class="report-card">
-                            <h3 class="card-title"><i class="fa-solid fa-lightbulb"></i> 추천 해결 방향</h3>
-                            <div class="recommendation-text" id="recommendation-text">
-                                <!-- JS에서 동적 삽입 -->
-                            </div>
+                        <!-- [섹션 4]: 주의사항 / 실패 위험 포인트 경고 -->
+                        <div class="report-card warning-card" id="ai-section-warnings">
+                            <!-- JS에서 동적 삽입됨 -->
                         </div>
                         
                         <!-- MVP 15단계: 수익화 코칭 강조 배너 -->
                         <div id="analysis-monetize-cta" style="margin-top: 20px;"></div>
                     </div>
 
-                    <!-- 하단 고정: 다음 단계 액션 버튼들 -->
+                    <!-- 하단 고정: PDF로 저장 / 전문가 코칭 2개 버튼 병렬 노출 -->
                     <div class="bottom-action-bar" style="display: flex; gap: 8px;">
-                        <button class="btn btn-secondary btn-large" style="flex:1; padding:16px 10px;" onclick="navigate('chat')">
-                            <i class="fa-solid fa-user-tie"></i> 전문가 코칭
+                        <button class="btn btn-secondary btn-large" style="flex:1; padding:16px 10px; justify-content:center; gap:6px;" onclick="saveReportAsPDF()">
+                            <i class="fa-solid fa-file-pdf"></i> PDF로 저장하기
                         </button>
-                        <button class="btn btn-primary btn-large" style="flex:2; padding:16px 10px;" onclick="goToProcessStep()">
-                            <span>추천 공정 보기</span>
-                            <i class="fa-solid fa-arrow-right"></i>
+                        <button class="btn btn-primary btn-large" style="flex:1; padding:16px 10px; justify-content:center; gap:6px;" onclick="navigate('coaching')">
+                            <i class="fa-solid fa-user-tie"></i> 전문가 코칭 받기
                         </button>
                     </div>
                 </section>
@@ -904,13 +1022,15 @@
                     </div>
 
                     <!-- 하단 고정: 결제 및 신청 버튼 -->
-                    <div class="bottom-action-bar" style="display:flex; flex-direction:column; gap:12px; border-top: 1px solid var(--border-color); box-shadow: 0 -4px 12px rgba(0,0,0,0.05);">
+                    <div class="bottom-action-bar" style="display:flex; flex-direction:column; gap:10px; border-top: 1px solid var(--border-color); box-shadow: 0 -4px 12px rgba(0,0,0,0.05);">
                         <div style="display:flex; justify-content:space-between; align-items:center; padding: 0 4px;">
                             <span style="font-size:0.95rem; font-weight:600; color:var(--text-main);">결제 예정 금액</span>
                             <strong id="coach-total-price" style="font-size:1.4rem; color:var(--primary-dark);">9,900 원</strong>
                         </div>
-                        <button class="btn btn-primary btn-large" style="width:100%;" onclick="submitCoachingRequest()">
-                            <span>코칭 신청하기 (결제 없음)</span>
+                        <p style="font-size:0.75rem; color:var(--text-sub); text-align:right; margin: -4px 4px 0 0;"><i class="fa-solid fa-circle-info" style="color:var(--primary-dark);"></i> 신청 후 담당자 확인 시 결제 진행</p>
+                        <button class="btn btn-primary btn-large" style="width:100%; justify-content:center; gap:8px;" onclick="submitCoachingRequest()">
+                            <span>코칭 신청서 제출하기</span>
+                            <i class="fa-solid fa-arrow-right"></i>
                         </button>
                     </div>
                 </section>
@@ -977,6 +1097,402 @@
 
                     <div id="project-list-container" style="padding-bottom:80px; display:flex; flex-direction:column; gap:12px;">
                         <!-- JS로 렌더링 -->
+                    </div>
+                </section>
+
+                <!-- 뷰: 구독형 프리미엄 플랜 요금제 선택 페이지 -->
+                <section id="view-pricing" class="view-section" style="padding-bottom: 80px;">
+                    <div class="header-section" style="padding-bottom: 10px;">
+                        <button class="back-btn" onclick="navigate('home')"><i class="fa-solid fa-arrow-left"></i></button>
+                        <h2><i class="fa-solid fa-gem" style="color: #ffb74d;"></i> 셀인케어 멤버십</h2>
+                        <p>나에게 딱 맞는 플랜을 선택하고 한도 없는 AI 설계를 시작해보세요.</p>
+                    </div>
+
+                    <!-- 월간 / 연간 결제 혜택 스위치 토글 -->
+                    <div style="display:flex; justify-content:center; align-items:center; gap:10px; margin: 20px 0 25px 0;">
+                        <span id="label-billing-monthly" style="font-size:0.85rem; font-weight:800; color:var(--text-main);">월간 결제</span>
+                        <label class="switch" style="position:relative; display:inline-block; width:44px; height:24px;">
+                            <input type="checkbox" id="pricing-billing-toggle" onchange="toggleBillingCycle()" style="opacity:0; width:0; height:0;">
+                            <span class="slider round" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#ccc; transition:.4s; border-radius:34px;"></span>
+                        </label>
+                        <span id="label-billing-yearly" style="font-size:0.85rem; font-weight:800; color:var(--text-sub);">
+                            연간 결제 <span style="background:linear-gradient(135deg, #e53e3e 0%, #ff7043 100%); color:white; font-size:0.65rem; padding:2px 6px; border-radius:10px; font-weight:900;">2개월 무료 🎁</span>
+                        </span>
+                    </div>
+
+                    <!-- 3단 플랜 카드 레이아웃 -->
+                    <div class="pricing-cards-container" style="display:flex; flex-direction:column; gap:20px;">
+                        
+                        <!-- 1. 무료 플랜 (Free) -->
+                        <div class="pricing-card" id="plan-card-Free" style="background:white; border-radius:20px; padding:24px; border:2px solid var(--border-color); position:relative; transition: all 0.3s ease;">
+                            <h3 style="font-size:1.15rem; font-weight:800; margin:0 0 6px 0; color:#4a5568;">무료 플랜 (Free)</h3>
+                            <p style="font-size:0.75rem; color:var(--text-sub); margin:0 0 16px 0;">셀프 인테리어를 가볍게 체험해보는 플랜</p>
+                            <div style="margin-bottom:20px;">
+                                <strong style="font-size:1.6rem; font-weight:900; color:#1a202c;">0원</strong>
+                                <span style="font-size:0.8rem; color:var(--text-sub);">/ 평생 무료</span>
+                            </div>
+                            
+                            <ul style="list-style:none; padding:0; margin:0 0 24px 0; display:flex; flex-direction:column; gap:10px; font-size:0.82rem; color:#4a5568; text-align:left;">
+                                <li><i class="fa-solid fa-circle-check" style="color:var(--primary); margin-right:8px;"></i> AI 정밀 분석 <b>월 2회</b> 제공</li>
+                                <li><i class="fa-solid fa-circle-check" style="color:var(--primary); margin-right:8px;"></i> 프로젝트 <b>최대 1개</b> 저장</li>
+                                <li style="color:#a0aec0; text-decoration:line-through;"><i class="fa-solid fa-circle-xmark" style="margin-right:8px;"></i> 맞춤형 시공 PDF 내보내기/저장</li>
+                                <li style="color:#a0aec0; text-decoration:line-through;"><i class="fa-solid fa-circle-xmark" style="margin-right:8px;"></i> 전문가 1:1 우선 코칭 할인</li>
+                            </ul>
+                            
+                            <button class="btn btn-secondary" id="btn-pricing-Free" style="width:100%; justify-content:center; padding:12px; font-weight:800; border-radius:12px;" onclick="selectPricingPlan('Free')">현재 이용 중</button>
+                        </div>
+
+                        <!-- 2. 베이직 플랜 (Basic) -->
+                        <div class="pricing-card" id="plan-card-Basic" style="background:white; border-radius:20px; padding:24px; border:2px solid var(--border-color); position:relative; transition: all 0.3s ease; box-shadow: 0 10px 25px rgba(102, 126, 234, 0.08);">
+                            <!-- 추천 뱃지 -->
+                            <span class="pricing-card-badge" style="position:absolute; top:-12px; right:20px; background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); color:white; font-size:0.7rem; font-weight:800; padding:4px 12px; border-radius:20px; box-shadow: 0 4px 10px rgba(102, 126, 234, 0.3);">
+                                <i class="fa-solid fa-star"></i> 가장 인기 / 추천 플랜
+                            </span>
+                            
+                            <h3 style="font-size:1.2rem; font-weight:800; margin:0 0 6px 0; color:var(--primary-dark);">베이직 플랜 (Basic)</h3>
+                            <p style="font-size:0.75rem; color:var(--text-sub); margin:0 0 16px 0;">본격적인 셀프 인테리어를 위한 필수 멤버십</p>
+                            <div style="margin-bottom:20px;">
+                                <strong id="price-text-Basic" style="font-size:1.8rem; font-weight:900; color:var(--primary-dark);">9,900 원</strong>
+                                <span id="period-text-Basic" style="font-size:0.8rem; color:var(--text-sub);">/ 월</span>
+                                <span id="discount-badge-Basic" style="display:none; font-size:0.7rem; background:#fff3eb; color:var(--primary); font-weight:800; padding:2px 6px; border-radius:6px; margin-left:4px;">연 결제 할인 16% 적용</span>
+                            </div>
+                            
+                            <ul style="list-style:none; padding:0; margin:0 0 24px 0; display:flex; flex-direction:column; gap:10px; font-size:0.82rem; color:#4a5568; text-align:left;">
+                                <li><i class="fa-solid fa-circle-check" style="color:var(--primary); margin-right:8px;"></i> AI 정밀 분석 <b>제한 없이 무제한</b></li>
+                                <li><i class="fa-solid fa-circle-check" style="color:var(--primary); margin-right:8px;"></i> 프로젝트 <b>최대 5개</b> 동시 보관</li>
+                                <li><i class="fa-solid fa-circle-check" style="color:var(--primary); margin-right:8px;"></i> <b>맞춤형 계획서 PDF 저장/인쇄</b> 지원</li>
+                                <li><i class="fa-solid fa-circle-check" style="color:var(--primary); margin-right:8px;"></i> 최저가 제휴 자재 맞춤 큐레이션</li>
+                            </ul>
+                            
+                            <button class="btn btn-primary" id="btn-pricing-Basic" style="width:100%; justify-content:center; padding:12px; font-weight:800; border-radius:12px; background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); border:none; color:white;" onclick="selectPricingPlan('Basic')">베이직 시작하기</button>
+                        </div>
+
+                        <!-- 3. 프로 플랜 (Pro) -->
+                        <div class="pricing-card" id="plan-card-Pro" style="background:white; border-radius:20px; padding:24px; border:2px solid var(--border-color); position:relative; transition: all 0.3s ease;">
+                            <h3 style="font-size:1.15rem; font-weight:800; margin:0 0 6px 0; color:#5b21b6;">프로 플랜 (Pro)</h3>
+                            <p style="font-size:0.75rem; color:var(--text-sub); margin:0 0 16px 0;">위험 요소 제거부터 전문가 코칭까지 완전 해결</p>
+                            <div style="margin-bottom:20px;">
+                                <strong id="price-text-Pro" style="font-size:1.8rem; font-weight:900; color:#5b21b6;">19,900 원</strong>
+                                <span id="period-text-Pro" style="font-size:0.8rem; color:var(--text-sub);">/ 월</span>
+                                <span id="discount-badge-Pro" style="display:none; font-size:0.7rem; background:#faf5ff; color:#6b46c1; font-weight:800; padding:2px 6px; border-radius:6px; margin-left:4px;">연 결제 할인 16% 적용</span>
+                            </div>
+                            
+                            <ul style="list-style:none; padding:0; margin:0 0 24px 0; display:flex; flex-direction:column; gap:10px; font-size:0.82rem; color:#4a5568; text-align:left;">
+                                <li><i class="fa-solid fa-circle-check" style="color:var(--primary); margin-right:8px;"></i> 베이직 플랜의 <b>모든 혜택 무제한</b></li>
+                                <li><i class="fa-solid fa-circle-check" style="color:var(--primary); margin-right:8px;"></i> <b>전문가 1:1 사진/서면 코칭 1회권 (매월 제공)</b></li>
+                                <li><i class="fa-solid fa-circle-check" style="color:var(--primary); margin-right:8px;"></i> 프로젝트 <b>무제한 생성 및 보관</b></li>
+                                <li><i class="fa-solid fa-circle-check" style="color:var(--primary); margin-right:8px;"></i> 전용 VIP 고객 상담 채널 연결</li>
+                            </ul>
+                            
+                            <button class="btn btn-primary" id="btn-pricing-Pro" style="width:100%; justify-content:center; padding:12px; font-weight:800; border-radius:12px; background:linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%); border:none; color:white;" onclick="selectPricingPlan('Pro')">프로 선택하기</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 뷰: 구독 관리 마이페이지 화면 -->
+                <section id="view-myplan" class="view-section" style="padding-bottom: 80px;">
+                    <div class="header-section" style="padding-bottom: 10px;">
+                        <button class="back-btn" onclick="navigate('home')"><i class="fa-solid fa-arrow-left"></i></button>
+                        <h2><i class="fa-solid fa-circle-user" style="color: var(--primary);"></i> 구독 & 요금제 관리</h2>
+                        <p>현재 구독 상태를 모니터링하고 요금제 결제를 통합 관리합니다.</p>
+                    </div>
+
+                    <!-- 요금제 카드 위젯 -->
+                    <div class="q-card" style="margin-bottom: 20px; border:1px solid var(--primary-light); background: linear-gradient(to bottom, #fff8f5, #ffffff);">
+                        <span style="font-size:0.7rem; font-weight:800; color:var(--primary); background:#fff3eb; padding:2px 8px; border-radius:6px; display:inline-block; margin-bottom:10px;">이용 중인 플랜</span>
+                        
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                            <h3 id="myplan-name" style="margin:0; font-size:1.35rem; font-weight:900; color:var(--text-main);">무료 플랜 (Free)</h3>
+                            <strong id="myplan-price" style="font-size:1.25rem; font-weight:900; color:var(--primary-dark);">0원</strong>
+                        </div>
+                        
+                        <!-- 구독 세부 요약 -->
+                        <div style="border-top:1px solid #edf2f7; padding-top:12px; display:flex; flex-direction:column; gap:8px; font-size:0.8rem; color:#4a5568;">
+                            <div style="display:flex; justify-content:space-between;">
+                                <span>다음 결제 예정일</span>
+                                <strong id="myplan-next-date" style="color:#2d3748;">해당 없음</strong>
+                            </div>
+                            <div style="display:flex; justify-content:space-between;">
+                                <span>결제 수단</span>
+                                <strong id="myplan-payment" style="color:#2d3748;">미등록</strong>
+                            </div>
+                            <div style="display:flex; justify-content:space-between;">
+                                <span>AI 분석 이용 횟수</span>
+                                <strong id="myplan-analysis-usage" style="color:#2d3748;">0 / 2 회 (이번 달)</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 플랜 고도화 안내 CTA 배너 -->
+                    <div class="banner-ad" id="myplan-upgrade-banner" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color:white; padding:18px; border-radius:16px; margin-bottom:24px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; box-shadow:0 8px 20px rgba(102, 126, 234, 0.15);" onclick="navigate('pricing')">
+                        <div>
+                            <h4 style="margin:0; font-size:1.05rem; font-weight:800;">🚀 무제한 AI 도우미 무장하기</h4>
+                            <p style="margin:4px 0 0 0; font-size:0.82rem; opacity:0.9;">베이직으로 업그레이드 시 무제한 진단 + 고화질 PDF</p>
+                        </div>
+                        <i class="fa-solid fa-chevron-right" style="font-size:1.1rem;"></i>
+                    </div>
+
+                    <!-- 🛠️ 신규: 내 전문가 매칭 요청 현황 섹션 -->
+                    <div class="q-card" style="margin-bottom: 24px; border:1px solid #e2e8f0; background:white; text-align:left;">
+                        <h3 style="margin:0 0 14px 0; font-size:1.05rem; font-weight:800; color:var(--text-main); display:flex; align-items:center; gap:6px;">
+                            <i class="fa-solid fa-handshake" style="color:var(--primary);"></i> 내 전문가 매칭 요청 현황 💼
+                        </h3>
+                        
+                        <div id="matching-status-container">
+                            <!-- JS를 통해 동적 매칭 상태 리스트 주입 -->
+                            <div style="padding:20px 10px; text-align:center; color:var(--text-sub);">
+                                <i class="fa-solid fa-clipboard-list" style="font-size:2rem; margin-bottom:8px; opacity:0.4;"></i>
+                                <p style="margin:0; font-size:0.8rem;">신청된 전문가 매칭 내역이 없습니다.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 구독 변경/해지 액션 패널 -->
+                    <div style="display:flex; flex-direction:column; gap:12px;">
+                        <button class="btn btn-primary btn-large" style="justify-content:center; gap:8px;" onclick="navigate('pricing')">
+                            <i class="fa-solid fa-shuffle"></i> 요금제 플랜 변경하기
+                        </button>
+                        <button class="btn btn-secondary btn-large" id="btn-myplan-cancel" style="justify-content:center; gap:8px; border-color:#e2e8f0; color:#a0aec0;" onclick="handleSubscriptionCancelClick()">
+                            <i class="fa-solid fa-ban"></i> 멤버십 구독 해지하기
+                        </button>
+                    </div>
+                </section>
+
+                <!-- 뷰: 셀프 인테리어 가이드 콘텐츠 목록 -->
+                <section id="view-guide" class="view-section" style="padding-bottom: 80px;">
+                    <div class="header-section" style="padding-bottom: 10px;">
+                        <button class="back-btn" onclick="navigate('home')"><i class="fa-solid fa-arrow-left"></i></button>
+                        <h2><i class="fa-solid fa-book-open" style="color: var(--primary);"></i> 셀인 완벽 가이드</h2>
+                        <p>전문가급 시공 지식과 검증된 가이드라인을 무료로 열람해 보세요.</p>
+                    </div>
+
+                    <!-- 카테고리 필터 칩스 -->
+                    <div class="category-filter-container" style="display:flex; gap:8px; overflow-x:auto; padding:10px 0; margin-bottom:16px; scrollbar-width:none;">
+                        <span class="chip selected" id="filter-chip-all" onclick="filterGuideArticles('all')">전체</span>
+                        <span class="chip" id="filter-chip-결로" onclick="filterGuideArticles('결로/곰팡이')">결로/곰팡이</span>
+                        <span class="chip" id="filter-chip-단열" onclick="filterGuideArticles('단열')">단열</span>
+                        <span class="chip" id="filter-chip-욕실" onclick="filterGuideArticles('욕실')">욕실</span>
+                        <span class="chip" id="filter-chip-바닥" onclick="filterGuideArticles('바닥/장판')">바닥/장판</span>
+                        <span class="chip" id="filter-chip-벽체" onclick="filterGuideArticles('벽체/도배')">벽체/도배</span>
+                    </div>
+
+                    <!-- 아티클 리스트 렌더링 컨테이너 -->
+                    <div id="guide-list-container" style="display:flex; flex-direction:column; gap:16px;">
+                        <!-- JS에서 동적으로 채워짐 -->
+                    </div>
+                </section>
+
+                <!-- 뷰: 가이드 아티클 상세 화면 -->
+                <section id="view-guide-detail" class="view-section" style="padding-bottom: 90px; text-align:left;">
+                    <div class="header-section" style="padding-bottom: 10px; display:flex; justify-content:space-between; align-items:center;">
+                        <button class="back-btn" onclick="navigate('guide')"><i class="fa-solid fa-arrow-left"></i></button>
+                        <span id="detail-category-badge" style="font-size:0.75rem; font-weight:800; padding:4px 8px; border-radius:6px; background:var(--primary-light); color:white;">카테고리</span>
+                    </div>
+
+                    <div class="article-detail-card" style="background:white; border-radius:20px; padding:24px; border:1px solid var(--border-color); box-shadow:var(--shadow-sm); overflow:hidden;">
+                        <!-- 목차 박스 -->
+                        <div id="article-toc-box" style="background:#f7fafc; border-left:4px solid var(--primary); padding:16px; border-radius:8px; margin-bottom:24px;">
+                            <h5 style="margin:0 0 10px 0; font-size:0.9rem; font-weight:800; color:var(--text-main); display:flex; align-items:center; gap:6px;"><i class="fa-solid fa-list-ul"></i> 핵심 가이드 목차</h5>
+                            <ul id="article-toc-list" style="margin:0; padding-left:20px; font-size:0.8rem; line-height:1.6; color:#4a5568;">
+                                <!-- 동적 H2 추출 목차 목록 -->
+                            </ul>
+                        </div>
+
+                        <!-- 아티클 본문 렌더링 공간 -->
+                        <div id="article-body-area" class="article-markdown-body" style="font-size:0.9rem; line-height:1.7; color:var(--text-main);">
+                            <!-- JS를 통해 컴파일된 마크다운 텍스트 주입 -->
+                        </div>
+                    </div>
+
+                    <!-- 하단 추천 아티클 섹션 -->
+                    <div class="content-section" style="margin-top:35px; padding:0;">
+                        <h3 style="font-size:1.05rem; font-weight:800; color:var(--text-main); margin-bottom:14px; display:flex; align-items:center; gap:6px;"><i class="fa-solid fa-thumbs-up" style="color:#d69e2e;"></i> 함께 읽으면 좋은 관련 가이드</h3>
+                        <div id="article-recommend-list" style="display:flex; flex-direction:column; gap:12px;">
+                            <!-- 관련 추천 아티클 3개 -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 뷰: 전문가 매칭 요청 폼 (view-match-form) -->
+                <section id="view-match-form" class="view-section" style="padding-bottom: 90px; text-align:left;">
+                    <div class="header-section" style="padding-bottom: 10px;">
+                        <button class="back-btn" onclick="navigate('home')"><i class="fa-solid fa-arrow-left"></i></button>
+                        <h2><i class="fa-solid fa-handshake" style="color:var(--primary);"></i> 안심 전문가 매칭 신청</h2>
+                        <p>셀프로 해결하기 힘든 하자나 시공을 전문 파트너에게 맡기세요.</p>
+                    </div>
+
+                    <div class="q-card" style="background:white; border-radius:20px; padding:24px; border:1px solid var(--border-color); box-shadow:var(--shadow-sm);">
+                        <form id="expert-match-form" onsubmit="event.preventDefault(); submitMatchRequest();" style="display:flex; flex-direction:column; gap:20px;">
+                            
+                            <!-- 공사 유형 -->
+                            <div>
+                                <label style="font-size:0.85rem; font-weight:800; color:var(--text-main); display:block; margin-bottom:8px;">🛠️ 공사 유형</label>
+                                <select id="match-construction-type" style="width:100%; padding:12px; border-radius:10px; border:1px solid var(--border-color); font-size:0.85rem; outline:none; background:white;">
+                                    <option value="mold">결로 및 곰팡이 하차 보수</option>
+                                    <option value="insulation">외벽/천장 정밀 단열 시공</option>
+                                    <option value="bathroom">욕실 방수 및 타일 재시공</option>
+                                    <option value="floor">바닥/장판 교체 및 미장 보수</option>
+                                    <option value="wall">벽체 목공 및 도배/페인트</option>
+                                    <option value="full">기타 하자 원인 분석 및 종합 시공</option>
+                                </select>
+                            </div>
+
+                            <!-- 희망 지역 -->
+                            <div style="display:flex; gap:10px;">
+                                <div style="flex:1;">
+                                    <label style="font-size:0.85rem; font-weight:800; color:var(--text-main); display:block; margin-bottom:8px;">📍 시/도</label>
+                                    <select id="match-region-sido" onchange="updateMatchGunguOptions()" style="width:100%; padding:12px; border-radius:10px; border:1px solid var(--border-color); font-size:0.85rem; outline:none; background:white;">
+                                        <option value="seoul">서울특별시</option>
+                                        <option value="gyeonggi">경기도</option>
+                                        <option value="incheon">인천광역시</option>
+                                    </select>
+                                </div>
+                                <div style="flex:1;">
+                                    <label style="font-size:0.85rem; font-weight:800; color:var(--text-main); display:block; margin-bottom:8px;">📍 시/군/구</label>
+                                    <select id="match-region-gungu" style="width:100%; padding:12px; border-radius:10px; border:1px solid var(--border-color); font-size:0.85rem; outline:none; background:white;">
+                                        <!-- JS로 옵션 업데이트 -->
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- 희망 일정 -->
+                            <div>
+                                <label style="font-size:0.85rem; font-weight:800; color:var(--text-main); display:block; margin-bottom:8px;">📅 희망 시공 일정</label>
+                                <select id="match-schedule" style="width:100%; padding:12px; border-radius:10px; border:1px solid var(--border-color); font-size:0.85rem; outline:none; background:white;">
+                                    <option value="urgent">최대한 빨리 (1주일 내)</option>
+                                    <option value="normal">2주일 내 협의 가능</option>
+                                    <option value="month">1달 내 여유롭게</option>
+                                </select>
+                            </div>
+
+                            <!-- 예산 한도 -->
+                            <div>
+                                <label style="font-size:0.85rem; font-weight:800; color:var(--text-main); display:block; margin-bottom:8px;">💰 희망 예산</label>
+                                <select id="match-budget-limit" style="width:100%; padding:12px; border-radius:10px; border:1px solid var(--border-color); font-size:0.85rem; outline:none; background:white;">
+                                    <option value="under-100">100만 원 이하</option>
+                                    <option value="100-200">100만 원 ~ 200만 원</option>
+                                    <option value="200-500">200만 원 ~ 500만 원</option>
+                                    <option value="over-500">500만 원 이상</option>
+                                </select>
+                            </div>
+
+                            <!-- 현장 사진 등록 -->
+                            <div>
+                                <label style="font-size:0.85rem; font-weight:800; color:var(--text-main); display:block; margin-bottom:8px;">📸 현장 사진 업로드 (선택)</label>
+                                <div style="border:2px dashed #cbd5e0; border-radius:12px; padding:20px; text-align:center; cursor:pointer; background:#f8fafc;" onclick="document.getElementById('match-photo-input').click()">
+                                    <i class="fa-solid fa-cloud-arrow-up" style="font-size:2rem; color:#a0aec0; margin-bottom:8px;"></i>
+                                    <p style="margin:0; font-size:0.8rem; color:#718096; font-weight:700;">클릭하여 하자 현장 사진 올리기</p>
+                                    <p style="margin:4px 0 0 0; font-size:0.7rem; color:#a0aec0;">PNG, JPG 파일 최대 5MB</p>
+                                    <input type="file" id="match-photo-input" style="display:none;" onchange="handleMatchPhotoSelect()">
+                                </div>
+                                <div id="match-photo-preview-list" style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;"></div>
+                            </div>
+
+                            <!-- 상세 요청사항 -->
+                            <div>
+                                <label style="font-size:0.85rem; font-weight:800; color:var(--text-main); display:block; margin-bottom:8px;">📝 상세 하자 증상 및 요청사항</label>
+                                <textarea id="match-details" placeholder="예: 안방 창문 쪽 모서리 벽지에서 결로 현상과 함께 검은 곰팡이가 퍼지고 있습니다. 단열재 교체 시공을 완벽하게 원합니다." rows="4" style="width:100%; padding:12px; border-radius:10px; border:1px solid var(--border-color); font-size:0.85rem; outline:none; resize:none; font-family:inherit;"></textarea>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-large" style="width:100%; justify-content:center; padding:16px; font-weight:900; font-size:1rem; border-radius:14px; background:linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);">
+                                안심 견적 매칭 신청서 제출하기 →
+                            </button>
+                        </form>
+                    </div>
+                </section>
+
+                <!-- 뷰: 주변 검증 전문가 목록 (view-match-list) -->
+                <section id="view-match-list" class="view-section" style="padding-bottom: 80px; text-align:left;">
+                    <div class="header-section" style="padding-bottom: 10px; display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <button class="back-btn" onclick="navigate('home')"><i class="fa-solid fa-arrow-left"></i></button>
+                            <h2 style="display:inline-block; margin-left:8px;"><i class="fa-solid fa-user-shield" style="color:#38a169;"></i> 안심 검증 전문가</h2>
+                        </div>
+                        <span style="font-size:0.7rem; font-weight:800; background:#ebf8ff; color:#2b6cb0; padding:4px 8px; border-radius:12px; cursor:pointer;" onclick="navigate('admin-expert')"><i class="fa-solid fa-wrench"></i> 파트너 가입</span>
+                    </div>
+
+                    <!-- 전문가 필터 -->
+                    <div style="margin-bottom:16px;">
+                        <p style="font-size:0.8rem; color:var(--text-sub); margin:0 0 10px 0;">셀인케어의 까다로운 3단계 인증을 완료한 안심 시공 전문가 리스트입니다.</p>
+                    </div>
+
+                    <!-- 전문가 카드 렌더링 컨테이너 -->
+                    <div id="expert-cards-container" style="display:flex; flex-direction:column; gap:16px;">
+                        <!-- JS에서 동적으로 전문가 목록 렌더링 -->
+                    </div>
+                </section>
+
+                <!-- 뷰: 관리자 전문가 신청/승인 페이지 (view-admin-expert) -->
+                <section id="view-admin-expert" class="view-section" style="padding-bottom: 90px; text-align:left;">
+                    <div class="header-section" style="padding-bottom: 10px;">
+                        <button class="back-btn" onclick="navigate('match-list')"><i class="fa-solid fa-arrow-left"></i></button>
+                        <h2><i class="fa-solid fa-screwdriver-wrench" style="color:#4a5568;"></i> 파트너 지원 및 어드민</h2>
+                        <p>셀인케어 인증 파트너 신청서 제출 및 수수료/계약 관리 시스템입니다.</p>
+                    </div>
+
+                    <!-- 파트너 가입 폼 및 수수료 정보 -->
+                    <div class="q-card" style="background:#f7fafc; border-left:4px solid #4a5568; margin-bottom:20px; padding:16px;">
+                        <h4 style="margin:0 0 8px 0; color:#2d3748; font-size:0.95rem; font-weight:800;"><i class="fa-solid fa-calculator"></i> 셀인케어 매칭 수수료 및 혜택</h4>
+                        <ul style="margin:0; padding-left:20px; font-size:0.75rem; color:#4a5568; line-height:1.5;">
+                            <li><b>전문가 월 구독료(기본 노출료)</b>: 49,000원/월 (현재 정식 출시 이벤트로 <b>무료 오픈 🎁</b>)</li>
+                            <li><b>매칭 성사 수수료</b>: 최종 시공 계약 금액의 <b>8% 자동 청구</b> 구조 설계</li>
+                            <li><b>인증 뱃지 혜택</b>: 서류 검증 시 "셀인케어 인증 전문가" 골드 마크 즉시 노출</li>
+                        </ul>
+                    </div>
+
+                    <div class="q-card" style="background:white; border-radius:20px; padding:24px; border:1px solid var(--border-color); box-shadow:var(--shadow-sm); margin-bottom:24px;">
+                        <h3 style="margin:0 0 16px 0; font-size:1.05rem; font-weight:800; color:var(--text-main);"><i class="fa-solid fa-file-signature"></i> 시공 파트너 신규 가입 신청</h3>
+                        
+                        <form id="expert-register-form" onsubmit="event.preventDefault(); registerExpertPartner();" style="display:flex; flex-direction:column; gap:16px;">
+                            <div>
+                                <label style="font-size:0.8rem; font-weight:800; color:var(--text-main); display:block; margin-bottom:6px;">🏢 업체명 (브랜드명)</label>
+                                <input type="text" id="reg-expert-name" placeholder="예: 훈스 단열방수 디자인" required style="width:100%; padding:12px; border-radius:10px; border:1px solid var(--border-color); font-size:0.85rem; outline:none;">
+                            </div>
+                            
+                            <div style="display:flex; gap:10px;">
+                                <div style="flex:1;">
+                                    <label style="font-size:0.8rem; font-weight:800; color:var(--text-main); display:block; margin-bottom:6px;">👤 대표자명</label>
+                                    <input type="text" id="reg-expert-ceo" placeholder="홍길동" required style="width:100%; padding:12px; border-radius:10px; border:1px solid var(--border-color); font-size:0.85rem; outline:none;">
+                                </div>
+                                <div style="flex:1;">
+                                    <label style="font-size:0.8rem; font-weight:800; color:var(--text-main); display:block; margin-bottom:6px;">💼 사업자번호</label>
+                                    <input type="text" id="reg-expert-license" placeholder="120-00-00000" required style="width:100%; padding:12px; border-radius:10px; border:1px solid var(--border-color); font-size:0.85rem; outline:none;">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label style="font-size:0.8rem; font-weight:800; color:var(--text-main); display:block; margin-bottom:6px;">🛠️ 주요 전문 분야</label>
+                                <select id="reg-expert-specialty" style="width:100%; padding:12px; border-radius:10px; border:1px solid var(--border-color); font-size:0.85rem; outline:none; background:white;">
+                                    <option value="결로/곰팡이">결로 및 곰팡이 원천 차단</option>
+                                    <option value="단열 시공">고기밀 우레탄폼 단열 시공</option>
+                                    <option value="욕실 방수">욕실 전체/부분 철거방수</option>
+                                    <option value="종합 하자 보수">누수 탐지 및 종합 하자 보수</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label style="font-size:0.8rem; font-weight:800; color:var(--text-main); display:block; margin-bottom:6px;">📍 주 시공 활동 지역 (시/도)</label>
+                                <select id="reg-expert-region" style="width:100%; padding:12px; border-radius:10px; border:1px solid var(--border-color); font-size:0.85rem; outline:none; background:white;">
+                                    <option value="서울특별시 전체">서울특별시 전체</option>
+                                    <option value="경기도 경기남부">경기도 경기남부</option>
+                                    <option value="경기도 경기북부">경기도 경기북부</option>
+                                    <option value="인천광역시 전체">인천광역시 전체</option>
+                                </select>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; padding:14px; font-weight:800; font-size:0.9rem; border-radius:10px; background:#4a5568; border:none; color:white;">
+                                파트너 등록 신청 및 즉시 승인받기 🚀
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- 가입된 전문가 리스트 제어 (어드민 대시보드 성격) -->
+                    <div class="q-card" style="background:white; border-radius:20px; padding:24px; border:1px solid var(--border-color); box-shadow:var(--shadow-sm);">
+                        <h3 style="margin:0 0 14px 0; font-size:1.05rem; font-weight:800; color:var(--text-main);"><i class="fa-solid fa-list-check"></i> 등록 전문가 관리 대시보드</h3>
+                        
+                        <div id="admin-expert-list-container" style="display:flex; flex-direction:column; gap:12px;">
+                            <!-- 동적 전문가 관리 목록 -->
+                        </div>
                     </div>
                 </section>
 
@@ -1047,13 +1563,103 @@
             </div>
             
             <h3 style="margin:0 0 8px 0; font-size:1.3rem; font-weight:800; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">NotebookLM AI 분석 중</h3>
-            <p style="font-size:0.85rem; color:#718096; margin:0 0 24px 0;">3대 전문 지식 노트북을 교차 분석하고 있습니다.</p>
+            <div id="ai-loading-main-step" style="font-size:0.95rem; font-weight:800; color:#2d3748; margin-bottom:18px; display:flex; align-items:center; justify-content:center; gap:8px; background:#edf2f7; padding:8px 12px; border-radius:10px;">
+                <span class="step-dot" style="width:8px; height:8px; background:var(--primary); border-radius:50%; display:inline-block; animation: pulse 1s infinite;"></span>
+                <span id="ai-loading-step-text">문제 유형 분석 중...</span>
+            </div>
             
             <!-- 로딩 로그 창 -->
             <div id="ai-loading-logs" style="background:#1a202c; color:#a0aec0; font-family:monospace; font-size:0.8rem; padding:15px; border-radius:12px; text-align:left; min-height:115px; border:1px solid #2d3748; line-height:1.6; display:flex; flex-direction:column; gap:4px; box-sizing:border-box;">
                 <div style="color:#667eea;"><i class="fa-solid fa-chevron-right"></i> AI 진단 모델 초기화 중...</div>
             </div>
         </div>
+    </div>
+    <!-- 카카오 로그인 가상 모달 -->
+    <div id="kakao-login-modal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:99999; align-items:center; justify-content:center; backdrop-filter: blur(4px);">
+        <div class="kakao-modal-body">
+            <div class="kakao-logo">
+                <i class="fa-solid fa-comment"></i>
+            </div>
+            <h3>카카오 개인정보 제공 동의</h3>
+            <p>셀인케어 서비스를 편리하게 이용하기 위해<br>카카오 계정 프로필 제공에 동의해 주세요.</p>
+            
+            <div class="kakao-input-group">
+                <label for="kakao-user-name">닉네임 / 이름</label>
+                <input type="text" id="kakao-user-name" placeholder="닉네임을 입력해 주세요" value="셀인러">
+            </div>
+            
+            <div style="display:flex; gap:10px; width:100%;">
+                <button class="btn btn-secondary" style="flex:1; justify-content:center; background:#FFF; border:1px solid #DDD;" onclick="closeKakaoLogin()">취소</button>
+                <button class="btn btn-primary" style="flex:1; justify-content:center; background:#191919; color:#FEE500; box-shadow:none;" onclick="confirmKakaoLogin()">동의하고 시작</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 구독형 업그레이드 제한 유도 모달 -->
+    <div id="upgrade-suggest-modal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(10,15,30,0.6); z-index:99999; align-items:center; justify-content:center; backdrop-filter: blur(5px);">
+        <div style="background:white; padding:30px 24px; border-radius:20px; width:90%; max-width:380px; color:#2d3748; text-align:center; box-shadow:0 15px 35px rgba(0,0,0,0.2); border: 1px solid #edf2f7; position:relative; animation: zoomIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);">
+            <div style="width:60px; height:60px; border-radius:50%; background:#fff5f5; color:#e53e3e; display:flex; align-items:center; justify-content:center; font-size:1.8rem; margin:0 auto 20px auto;">
+                <i class="fa-solid fa-lock"></i>
+            </div>
+            <h3 id="upgrade-modal-title" style="margin:0 0 10px 0; font-size:1.25rem; font-weight:800; color:#1a202c;">베이직 플랜 전용 혜택</h3>
+            <p id="upgrade-modal-message" style="font-size:0.88rem; color:#4a5568; line-height:1.5; margin:0 0 24px 0;">이 기능은 프리미엄 멤버십 회원 전용입니다.<br>베이직 플랜으로 업그레이드하면 한도 없이 모든 기능을 자유롭게 사용할 수 있습니다.</p>
+            
+            <div style="display:flex; gap:10px; width:100%;">
+                <button class="btn btn-secondary" style="flex:1; justify-content:center; background:#f7fafc; border:1px solid #edf2f7; color:#4a5568;" onclick="closeUpgradeModal()">다음에 하기</button>
+                <button class="btn btn-primary" style="flex:1; justify-content:center; background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); border:none; color:white; font-weight:800;" onclick="goToPricingFromModal()">플랜 보러가기 <i class="fa-solid fa-chevron-right" style="font-size:0.75rem; margin-left:4px;"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 토스페이먼츠 간편결제 모달 시뮬레이터 -->
+    <div id="toss-payment-modal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:99999; align-items:center; justify-content:center; backdrop-filter: blur(4px);">
+        <div style="background:#ffffff; border-radius:24px; padding:28px 24px; width:90%; max-width:380px; color:#191f28; box-shadow: 0 20px 40px rgba(0,0,0,0.2); animation: zoomIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); border:1px solid #edf2f7;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid #f2f4f6; padding-bottom:12px;">
+                <div style="display:flex; align-items:center; gap:6px;">
+                    <span style="background:#0064ff; color:white; font-size:0.7rem; font-weight:900; padding:2px 6px; border-radius:6px; font-family:sans-serif; letter-spacing:-0.2px;">toss payments</span>
+                    <strong style="font-size:0.9rem; color:#4e5968;">안전 간편결제</strong>
+                </div>
+                <button onclick="closeTossPaymentModal()" style="background:none; border:none; font-size:1.1rem; color:#8b95a1; cursor:pointer; margin-left:auto;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <h3 id="toss-pay-title" style="margin:0 0 4px 0; font-size:1.15rem; font-weight:800; color:#191f28;">베이직 멤버십 정기구독</h3>
+            <div style="background:#f8f9fa; border-radius:12px; padding:12px 16px; margin-bottom:20px;">
+                <div style="display:flex; justify-content:space-between; font-size:0.85rem; color:#4e5968; margin-bottom:6px;">
+                    <span>최초 결제금액</span>
+                    <strong id="toss-pay-price" style="color:#191f28; font-weight:800;">월 9,900 원</strong>
+                </div>
+                <div style="display:flex; justify-content:space-between; font-size:0.72rem; color:#8b95a1;">
+                    <span>다음 결제 예정</span>
+                    <span id="toss-pay-next-date">2026. 06. 19</span>
+                </div>
+            </div>
+            
+            <!-- 결제 수단 가상 선택 -->
+            <div style="margin-bottom:24px;">
+                <label style="font-size:0.75rem; font-weight:700; color:#8b95a1; display:block; margin-bottom:8px;">💳 결제 카드 선택</label>
+                <select id="toss-card-select" style="width:100%; padding:12px; border-radius:10px; border:1px solid #d1d6db; font-size:0.85rem; font-weight:700; outline:none; background:#ffffff;">
+                    <option value="shinhan">신한카드 (정기결제)</option>
+                    <option value="hyundai">현대카드 (정기결제)</option>
+                    <option value="samsung">삼성카드 (정기결제)</option>
+                    <option value="kb">국민카드 (정기결제)</option>
+                    <option value="toss">토스뱅크카드 (정기결제)</option>
+                </select>
+            </div>
+            
+            <div style="background:#f2f4f6; border-radius:12px; padding:12px; font-size:0.72rem; color:#6b7684; line-height:1.45; margin-bottom:24px;">
+                <i class="fa-solid fa-shield-halved" style="color:#0064ff;"></i> 본 정기구독은 매월 동일한 일자에 자동 갱신 청구되며, 마이플랜 메뉴에서 언제든지 위약금 없이 간편하게 해지하실 수 있습니다.
+            </div>
+            
+            <button class="btn btn-primary" style="width:100%; justify-content:center; background:#0064ff; border:none; color:white; font-weight:800; padding:14px; font-size:0.95rem; border-radius:12px;" onclick="confirmTossPayment()">
+                안전 정기 결제 승인하기
+            </button>
+        </div>
+    </div>
+
+    <!-- 플로팅 토스트 알림 -->
+    <div id="global-toast" class="toast-msg">
+        <i class="fa-solid fa-circle-check" style="color: #48BB78;"></i>
+        <span id="global-toast-text">알림 내용</span>
     </div>
     
     <script type="module" src="app.js"></script>

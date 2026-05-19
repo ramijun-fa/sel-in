@@ -1238,9 +1238,979 @@ body {
     transform: translateY(-1px);
 }
 
+/* ==========================================
+   온보딩 및 회원가입 관련 프리미엄 스타일 추가
+   ========================================== */
 
+/* 1. 온보딩 뷰 스타일 */
+#view-onboarding {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--bg-page);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 40px 24px;
+    animation: fadeIn 0.4s ease;
+}
 
+.onboarding-slider {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+}
 
+.onboarding-slide {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    width: 100%;
+    animation: slideIn 0.4s ease-out;
+}
 
+.onboarding-slide.active {
+    display: flex;
+}
 
+@keyframes slideIn {
+    from { opacity: 0; transform: translateX(30px); }
+    to { opacity: 1; transform: translateX(0); }
+}
 
+.onboarding-illustration {
+    font-size: 5rem;
+    color: var(--primary);
+    margin-bottom: 30px;
+    filter: drop-shadow(0 10px 15px rgba(255, 112, 67, 0.2));
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+.onboarding-slide h2 {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--text-main);
+    margin-bottom: 16px;
+    line-height: 1.45;
+}
+
+.onboarding-slide p {
+    font-size: 0.95rem;
+    color: var(--text-sub);
+    line-height: 1.6;
+    max-width: 320px;
+}
+
+/* 온보딩 2단계 흐름도 시각화 */
+.flow-diagram {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    max-width: 300px;
+    margin-top: 20px;
+}
+
+.flow-step {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: white;
+    padding: 12px 18px;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+    text-align: left;
+}
+
+.flow-step-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: #FFF3EB;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    font-weight: 800;
+}
+
+.flow-step-text strong {
+    display: block;
+    font-size: 0.9rem;
+    color: var(--text-main);
+}
+
+.flow-step-text span {
+    font-size: 0.75rem;
+    color: var(--text-sub);
+}
+
+/* 온보딩 컨트롤러 */
+.onboarding-footer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.onboarding-dots {
+    display: flex;
+    gap: 8px;
+}
+
+.onboarding-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--secondary-dark);
+    transition: all 0.3s;
+    cursor: pointer;
+}
+
+.onboarding-dot.active {
+    background-color: var(--primary);
+    width: 20px;
+    border-radius: 4px;
+}
+
+.onboarding-btn-group {
+    width: 100%;
+    display: flex;
+    gap: 12px;
+}
+
+/* 2. 카카오 로그인 버튼 & 모달 */
+.btn-kakao {
+    background-color: #FEE500;
+    color: #191919;
+    box-shadow: 0 4px 12px rgba(254, 229, 0, 0.3);
+    width: 100%;
+    justify-content: center;
+    gap: 8px;
+    border-radius: var(--radius-lg);
+    border: none;
+    font-weight: 700;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    padding: 16px 20px;
+    cursor: pointer;
+}
+
+.btn-kakao:active {
+    transform: scale(0.98);
+}
+
+.btn-kakao i {
+    font-size: 1.2rem;
+}
+
+/* 카카오 로그인 모달 시뮬레이터 */
+.kakao-modal-body {
+    background: #FEE500;
+    border-radius: 20px;
+    padding: 30px 24px;
+    width: 90%;
+    max-width: 380px;
+    text-align: center;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+    border: 1px solid rgba(0,0,0,0.05);
+    position: relative;
+    animation: zoomIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes zoomIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.kakao-logo {
+    font-size: 2.5rem;
+    color: #191919;
+    margin-bottom: 15px;
+}
+
+.kakao-modal-body h3 {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #191919;
+    margin-bottom: 8px;
+}
+
+.kakao-modal-body p {
+    font-size: 0.85rem;
+    color: #3C3C3C;
+    margin-bottom: 24px;
+    line-height: 1.5;
+}
+
+.kakao-input-group {
+    background: white;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+    border: 1px solid #E5E5E5;
+    text-align: left;
+}
+
+.kakao-input-group label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #7A7A7A;
+    display: block;
+    margin-bottom: 6px;
+}
+
+.kakao-input-group input {
+    width: 100%;
+    border: none;
+    border-bottom: 2px solid #FEE500;
+    font-size: 1rem;
+    font-weight: 700;
+    padding: 6px 0;
+    color: #191919;
+    outline: none;
+}
+
+.kakao-input-group input:focus {
+    border-bottom-color: #191919;
+}
+
+/* 3. 로그인 배너 및 유저 프로필 */
+.login-suggestion-banner {
+    background: linear-gradient(135deg, #FFF3EB 0%, #FFF9F5 100%);
+    border: 1px dashed var(--primary);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+    margin: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    animation: fadeIn 0.3s ease;
+}
+
+.login-suggestion-banner p {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--primary-dark);
+    line-height: 1.45;
+    margin: 0;
+}
+
+.login-suggestion-banner button {
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    box-shadow: 0 2px 6px rgba(255, 112, 67, 0.2);
+}
+
+.cloud-active-badge {
+    background-color: #E6F4EA;
+    color: #137333;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* 로그인 유저용 아바타 */
+.user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: var(--primary-light);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.85rem;
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: var(--shadow-sm);
+}
+
+/* 4. 빈 프로젝트 상태 (Empty State) 스타일 */
+.empty-project-container {
+    background-color: white;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+    padding: 30px 24px;
+    margin: 20px;
+}
+.onboarding-dots {
+    display: flex;
+    gap: 8px;
+}
+
+.onboarding-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--secondary-dark);
+    transition: all 0.3s;
+    cursor: pointer;
+}
+
+.onboarding-dot.active {
+    background-color: var(--primary);
+    width: 20px;
+    border-radius: 4px;
+}
+
+.onboarding-btn-group {
+    width: 100%;
+    display: flex;
+    gap: 12px;
+}
+
+/* 2. 카카오 로그인 버튼 & 모달 */
+.btn-kakao {
+    background-color: #FEE500;
+    color: #191919;
+    box-shadow: 0 4px 12px rgba(254, 229, 0, 0.3);
+    width: 100%;
+    justify-content: center;
+    gap: 8px;
+    border-radius: var(--radius-lg);
+    border: none;
+    font-weight: 700;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    padding: 16px 20px;
+    cursor: pointer;
+}
+
+.btn-kakao:active {
+    transform: scale(0.98);
+}
+
+.btn-kakao i {
+    font-size: 1.2rem;
+}
+
+/* 카카오 로그인 모달 시뮬레이터 */
+.kakao-modal-body {
+    background: #FEE500;
+    border-radius: 20px;
+    padding: 30px 24px;
+    width: 90%;
+    max-width: 380px;
+    text-align: center;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+    border: 1px solid rgba(0,0,0,0.05);
+    position: relative;
+    animation: zoomIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes zoomIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.kakao-logo {
+    font-size: 2.5rem;
+    color: #191919;
+    margin-bottom: 15px;
+}
+
+.kakao-modal-body h3 {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #191919;
+    margin-bottom: 8px;
+}
+
+.kakao-modal-body p {
+    font-size: 0.85rem;
+    color: #3C3C3C;
+    margin-bottom: 24px;
+    line-height: 1.5;
+}
+
+.kakao-input-group {
+    background: white;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+    border: 1px solid #E5E5E5;
+    text-align: left;
+}
+
+.kakao-input-group label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #7A7A7A;
+    display: block;
+    margin-bottom: 6px;
+}
+
+.kakao-input-group input {
+    width: 100%;
+    border: none;
+    border-bottom: 2px solid #FEE500;
+    font-size: 1rem;
+    font-weight: 700;
+    padding: 6px 0;
+    color: #191919;
+    outline: none;
+}
+
+.kakao-input-group input:focus {
+    border-bottom-color: #191919;
+}
+
+/* 3. 로그인 배너 및 유저 프로필 */
+.login-suggestion-banner {
+    background: linear-gradient(135deg, #FFF3EB 0%, #FFF9F5 100%);
+    border: 1px dashed var(--primary);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+    margin: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    animation: fadeIn 0.3s ease;
+}
+
+.login-suggestion-banner p {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--primary-dark);
+    line-height: 1.45;
+    margin: 0;
+}
+
+.login-suggestion-banner button {
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    box-shadow: 0 2px 6px rgba(255, 112, 67, 0.2);
+}
+
+.cloud-active-badge {
+    background-color: #E6F4EA;
+    color: #137333;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* 로그인 유저용 아바타 */
+.user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: var(--primary-light);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.85rem;
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: var(--shadow-sm);
+}
+
+/* 4. 빈 프로젝트 상태 (Empty State) 스타일 */
+.empty-project-container {
+    background-color: white;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+    padding: 30px 24px;
+    margin: 20px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-sm);
+    animation: fadeIn 0.4s ease;
+}
+
+.empty-project-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background-color: #FFF3EB;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 10px rgba(255, 112, 67, 0.1);
+    animation: iconBounce 2s ease-in-out infinite;
+}
+
+@keyframes iconBounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+}
+
+.empty-project-container h3 {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--text-main);
+    margin-bottom: 8px;
+}
+
+.empty-project-container p {
+    font-size: 0.85rem;
+    color: var(--text-sub);
+    line-height: 1.5;
+    margin-bottom: 20px;
+    max-width: 260px;
+}
+
+.empty-project-container .btn {
+    width: 100%;
+    justify-content: center;
+    max-width: 240px;
+    padding: 12px 20px;
+}
+
+/* 토스트 메시지 스타일 */
+.toast-msg {
+    position: fixed;
+    bottom: 85px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: rgba(45, 55, 72, 0.95);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 30px;
+    z-index: 99999;
+    font-weight: 700;
+    font-size: 0.85rem;
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    opacity: 0;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.toast-msg.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* 5. 가로 스크롤 영역 그라데이션 컨테이너 (더 있음 힌트 제공) */
+.scroll-row-container {
+    position: relative;
+    width: 100%;
+}
+
+.scroll-row-container::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 48px;
+    height: 100%;
+    background: linear-gradient(to right, rgba(247, 250, 252, 0) 0%, rgba(247, 250, 252, 0.95) 100%);
+    pointer-events: none; /* 터치나 클릭 스크롤 방해 방지 */
+    z-index: 5;
+    border-top-right-radius: var(--radius-md);
+    border-bottom-right-radius: var(--radius-md);
+}
+
+/* 6. 메인 홈 개선된 CTA 카드 버튼 */
+.cta-card-btn {
+    display: flex;
+    flex-direction: row !important;
+    align-items: center;
+    justify-content: space-between !important;
+    height: auto !important;
+    padding: 16px 20px !important;
+    border-radius: var(--radius-lg) !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: var(--shadow-sm) !important;
+    width: 100%;
+    margin-bottom: 4px;
+}
+
+.cta-card-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md) !important;
+}
+
+.cta-card-btn:active {
+    transform: scale(0.99);
+}
+
+.cta-card-btn .btn-content {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    width: auto;
+    justify-content: flex-start;
+}
+
+.cta-icon {
+    font-size: 1.5rem;
+    color: white;
+    width: 24px;
+    text-align: center;
+}
+
+.cta-icon.secondary {
+    color: var(--primary);
+}
+
+.cta-text-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    text-align: left;
+}
+
+.cta-title {
+    font-size: 0.95rem;
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+.cta-card-btn.btn-primary .cta-title {
+    color: white;
+}
+
+.cta-card-btn.btn-secondary .cta-title {
+    color: var(--text-main);
+}
+
+.cta-subtitle {
+    font-size: 0.75rem;
+    font-weight: 400;
+    line-height: 1.3;
+}
+
+.cta-card-btn.btn-primary .cta-subtitle {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.cta-card-btn.btn-secondary .cta-subtitle {
+    color: var(--text-sub);
+}
+
+.arrow-icon {
+    font-size: 0.9rem;
+    color: white;
+    transition: transform 0.2s ease;
+}
+
+.arrow-icon.secondary {
+    color: var(--text-sub);
+}
+
+.cta-card-btn:hover .arrow-icon {
+    transform: translateX(4px);
+}
+
+/* ==========================================
+   자재 추천 & 수익화 커머스 제휴 스타일
+   ========================================== */
+.affiliate-section {
+    margin-top: 24px;
+    border-top: 1px dashed var(--border-color);
+    padding-top: 20px;
+}
+
+.affiliate-card-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.affiliate-card {
+    display: flex;
+    align-items: center;
+    background: #ffffff;
+    border: 1px solid #edf2f7;
+    border-radius: 14px;
+    padding: 12px 14px;
+    gap: 12px;
+    position: relative;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+    transition: all 0.2s ease;
+}
+
+.affiliate-card:hover {
+    transform: translateY(-1.5px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    border-color: var(--primary-light);
+}
+
+.affiliate-thumb {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #fff3eb 0%, #ffe4d3 100%);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.affiliate-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0; /* text-overflow 방지 */
+}
+
+.affiliate-badge-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.affiliate-badge {
+    background: #ff7043;
+    color: white;
+    font-size: 0.62rem;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 6px;
+    letter-spacing: -0.2px;
+}
+
+.affiliate-rating {
+    font-size: 0.72rem;
+    color: #e28743;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.affiliate-name {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: var(--text-main);
+    margin: 1px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.affiliate-spec-row {
+    display: flex;
+    gap: 8px;
+    font-size: 0.72rem;
+    color: var(--text-sub);
+}
+
+.affiliate-price {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--primary-dark);
+}
+
+.affiliate-link-btn {
+    padding: 8px 12px;
+    background: #edf2f7;
+    color: #4a5568;
+    border-radius: 10px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    cursor: pointer;
+    border: none;
+}
+
+.affiliate-link-btn:hover {
+    background: var(--primary);
+    color: white;
+}
+
+.affiliate-link-btn i {
+    font-size: 0.65rem;
+    transition: transform 0.2s;
+}
+
+.affiliate-link-btn:hover i {
+    transform: translateX(3px);
+}
+
+.affiliate-disclaimer {
+    font-size: 0.68rem;
+    color: #a0aec0;
+    margin-top: 10px;
+    text-align: center;
+    line-height: 1.4;
+}
+
+.cart-all-container {
+    margin-top: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.btn-cart-all {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-weight: 800;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-cart-all:hover {
+    transform: translateY(-1.5px);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+    background: var(--primary-dark);
+}
+
+.btn-cart-all:active {
+    transform: scale(0.99);
+}
+
+/* ==========================================
+   프리미엄 요금제 & 멤버십 UX 스타일링
+   ========================================== */
+
+/* 1. 월간/연간 결제 전환 스위치 */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #cbd5e0;
+    transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 24px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+
+input:checked + .slider {
+    background-color: var(--primary);
+}
+
+input:focus + .slider {
+    box-shadow: 0 0 1px var(--primary);
+}
+
+input:checked + .slider:before {
+    transform: translateX(20px);
+}
+
+/* 2. 요금제 카드 미세 호버 효과 */
+.pricing-card {
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.pricing-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 15px 30px rgba(102, 126, 234, 0.12) !important;
+    border-color: #667eea !important;
+}
+
+.pricing-card#plan-card-Pro:hover {
+    box-shadow: 0 15px 30px rgba(124, 58, 237, 0.12) !important;
+    border-color: #7c3aed !important;
+}
+
+.pricing-card#plan-card-Free:hover {
+    box-shadow: 0 12px 25px rgba(0,0,0,0.05) !important;
+    border-color: #a0aec0 !important;
+}
+
+/* 3. 모달 줌인 애니메이션 */
+@keyframes zoomIn {
+    from {
+        opacity: 0;
+        transform: scale(0.92);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
