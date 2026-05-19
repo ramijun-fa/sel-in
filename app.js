@@ -82,6 +82,21 @@ function getEmptyProjectState() {
 }
 
 
+// 토스트 알림 유틸리티 함수
+function showToast(message, duration = 3000) {
+    const toastEl = document.getElementById('global-toast');
+    const toastText = document.getElementById('global-toast-text');
+    if (!toastEl || !toastText) return;
+    
+    toastText.innerText = message;
+    toastEl.classList.add('show');
+    
+    clearTimeout(window._toastTimer);
+    window._toastTimer = setTimeout(() => {
+        toastEl.classList.remove('show');
+    }, duration);
+}
+
 // 초기화
 document.addEventListener("DOMContentLoaded", () => {
     // 1. 유저 로그인 정보 검사
@@ -1999,7 +2014,10 @@ Object.assign(window, {
     skipOnboarding,
 
     // 이미지 폴백 시스템
-    getFallbackImage
+    getFallbackImage,
+
+    // 토스트 알림
+    showToast
 });
 
 // ==========================================

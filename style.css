@@ -2214,3 +2214,33 @@ input:checked + .slider:before {
         transform: scale(1);
     }
 }
+
+/* 토스트 메시지 스타일 */
+.toast-msg {
+    position: fixed;
+    bottom: 85px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: rgba(45, 55, 72, 0.95);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 9999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    max-width: 85%;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.toast-msg.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
