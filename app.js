@@ -504,10 +504,14 @@ function generateAnalysisReport() {
         'full': '전체 리모델링', 'unknown': '진단 필요'
     };
     
-    document.getElementById('res-problem').innerText = problemMap[state.selectedProblem] || '진단 필요';
-    document.getElementById('res-space').innerText = projectState.spaces.length > 0 ? projectState.spaces.join(', ') : '-';
-    document.getElementById('res-budget').innerText = projectState.budget || '-';
-    document.getElementById('res-self').innerText = projectState.selfLevel || '-';
+    const resProblem = document.getElementById('res-problem');
+    if (resProblem) resProblem.innerText = problemMap[state.selectedProblem] || '진단 필요';
+    const resSpace = document.getElementById('res-space');
+    if (resSpace) resSpace.innerText = projectState.spaces.length > 0 ? projectState.spaces.join(', ') : '-';
+    const resBudget = document.getElementById('res-budget');
+    if (resBudget) resBudget.innerText = projectState.budget || '-';
+    const resSelf = document.getElementById('res-self');
+    if (resSelf) resSelf.innerText = projectState.selfLevel || '-';
 
     // 2. 위험도 분석 로직 (Rule-based)
     let riskCondensation = '낮음';
@@ -553,6 +557,7 @@ function generateAnalysisReport() {
     // 뱃지 색상 렌더링 함수
     const renderBadge = (id, value) => {
         const el = document.getElementById(id);
+        if (!el) return;
         el.innerText = value;
         el.className = 'badge'; // reset
         if (value === '낮음' || value === '쉬움') el.classList.add('risk-low');
@@ -583,17 +588,18 @@ function generateAnalysisReport() {
     // 경고 노출 처리
     const warningContainer = document.getElementById('warning-container');
     const warningList = document.getElementById('warning-list');
-    warningList.innerHTML = '';
-    
-    if (warnings.length > 0) {
-        warnings.forEach(w => {
-            const li = document.createElement('li');
-            li.innerText = w;
-            warningList.appendChild(li);
-        });
-        warningContainer.style.display = 'block';
-    } else {
-        warningContainer.style.display = 'none';
+    if (warningList && warningContainer) {
+        warningList.innerHTML = '';
+        if (warnings.length > 0) {
+            warnings.forEach(w => {
+                const li = document.createElement('li');
+                li.innerText = w;
+                warningList.appendChild(li);
+            });
+            warningContainer.style.display = 'block';
+        } else {
+            warningContainer.style.display = 'none';
+        }
     }
 
     // 4. 추천 해결 방향 렌더링
@@ -661,10 +667,13 @@ function generateAnalysisReport() {
         `;
     }
     
-    recoBox.innerHTML = recoHtml;
+    if (recoBox) {
+        recoBox.innerHTML = recoHtml;
+    }
     
     // MVP 15단계: 수익화 CTA 동적 노출
     const ctaContainer = document.getElementById('analysis-monetize-cta');
+    if (ctaContainer) {
     
     // 💡 신규: 난이도: 어려움 + 실패위험: 높음(재발 혹은 누수)일 때 전문가 매칭 배너 최우선 출력
     const isHighFailureRisk = (riskRecurrence === '높음' || riskLeak === '높음');
@@ -704,6 +713,7 @@ function generateAnalysisReport() {
                 </button>
             </div>
         `;
+    }
     }
 }
 
