@@ -714,7 +714,276 @@ function generateAnalysisReport() {
             </div>
         `;
     }
+
+    // ==========================================
+    // 신규 4대 명품 섹션 동적 렌더링 엔진 (실시간 바인딩)
+    // ==========================================
+    
+    // [섹션 1]: 문제 진단 요약
+    const diagnosisEl = document.getElementById('ai-section-diagnosis');
+    if (diagnosisEl) {
+        const symptomsText = projectState.symptoms.length > 0 ? projectState.symptoms.join(', ') : '없음';
+        const conditionsText = projectState.conditions.length > 0 ? projectState.conditions.join(', ') : '없음';
+        
+        diagnosisEl.innerHTML = `
+            <div style="padding: 20px;">
+                <h3 style="margin: 0 0 16px 0; font-size: 1.1rem; color: #1a202c; font-weight: 800; display:flex; align-items:center; gap:8px;">
+                    <span style="background: #ebf8ff; color: #2b6cb0; width:28px; height:28px; border-radius:8px; display:inline-flex; align-items:center; justify-content:center;"><i class="fa-solid fa-stethoscope"></i></span>
+                    AI 정밀 문제 진단 요약
+                </h3>
+                <div style="display:flex; flex-direction:column; gap:12px;">
+                    <div style="background: #f7fafc; padding: 12px; border-radius:8px; border-left:4px solid #4a5568;">
+                        <span style="font-size:0.75rem; font-weight:700; color:#718096; display:block; margin-bottom:4px;">진단된 하자와 증상</span>
+                        <p style="margin:0; font-size:0.85rem; font-weight:600; color:#2d3748;">
+                            ${problemMap[state.selectedProblem] || '진단 필요'} <span style="color:#718096; font-weight:400;">(${symptomsText})</span>
+                        </p>
+                    </div>
+                    <div style="background: #fffaf0; padding: 12px; border-radius:8px; border-left:4px solid #dd6b20;">
+                        <span style="font-size:0.75rem; font-weight:700; color:#dd6b20; display:block; margin-bottom:4px;">AI 하자 원인 추정</span>
+                        <p style="margin:0; font-size:0.85rem; font-weight:600; color:#7b341e; line-height:1.45;">
+                            외벽 조건(${conditionsText})과 실내 습도 축적으로 인해 콘크리트 미세 균열 부위에 곰팡이 균사체가 깊숙이 침투한 하자로, 기밀하지 않은 폼블럭 마감 등 전처리가 부실하여 재발된 복합 하자로 진단됩니다.
+                        </p>
+                    </div>
+                    <div style="background: #f0fff4; padding: 12px; border-radius:8px; border-left:4px solid #38a169;">
+                        <span style="font-size:0.75rem; font-weight:700; color:#38a169; display:block; margin-bottom:4px;">셀인케어 권장 해결 방향</span>
+                        <p style="margin:0; font-size:0.85rem; font-weight:600; color:#22543d; line-height:1.45;">
+                            기존 오염면의 완전 박멸과 기밀한 정밀 단열재(이보드 등) 밀착 시공, 시공 후 실내 환기 루틴을 강제 도입하여 환경적 요인을 완전히 통제해야 합니다.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        `;
     }
+
+    // [섹션 2]: 추천 공정 단계별 리스트
+    const processEl = document.getElementById('ai-section-process');
+    if (processEl) {
+        const problemKey = state.selectedProblem || 'mold';
+        const steps = processDataMap[problemKey] || processDataMap['mold'];
+        
+        let stepsHtml = `
+            <div style="padding: 20px;">
+                <h3 style="margin: 0 0 16px 0; font-size: 1.1rem; color: #1a202c; font-weight: 800; display:flex; align-items:center; gap:8px;">
+                    <span style="background: #f0fff4; color: #38a169; width:28px; height:28px; border-radius:8px; display:inline-flex; align-items:center; justify-content:center;"><i class="fa-solid fa-list-check"></i></span>
+                    추천 공정 단계별 타임라인
+                </h3>
+                <div style="position:relative; border-left:2px dashed #e2e8f0; margin-left:14px; padding-left:20px; display:flex; flex-direction:column; gap:20px;">
+        `;
+        
+        steps.forEach((step, idx) => {
+            stepsHtml += `
+                <div style="position:relative;">
+                    <span style="position:absolute; left:-31px; top:2px; background:#38a169; color:white; width:20px; height:20px; border-radius:50%; font-size:0.7rem; font-weight:800; display:inline-flex; align-items:center; justify-content:center; border:2px solid white; box-shadow:0 2px 4px rgba(0,0,0,0.1);">
+                        ${idx + 1}
+                    </span>
+                    <div style="display:flex; justify-content:between; align-items:center; margin-bottom:4px;">
+                        <h4 style="margin:0; font-size:0.9rem; font-weight:800; color:#2d3748;">${step.title}</h4>
+                        <span style="font-size:0.7rem; background:#edf2f7; color:#4a5568; padding:2px 6px; border-radius:4px; font-weight:700; margin-left:auto;">
+                            ⏱️ ${step.time}
+                        </span>
+                    </div>
+                    <p style="margin:0 0 4px 0; font-size:0.8rem; color:#718096; line-height:1.4;">${step.desc}</p>
+                    ${step.tools ? `<div style="font-size:0.75rem; color:#4a5568;"><i class="fa-solid fa-screwdriver-wrench" style="color:#a0aec0;"></i> <b>준비물:</b> ${step.tools}</div>` : ''}
+                    ${step.warning ? `<div style="font-size:0.75rem; color:#e53e3e; margin-top:2px;"><i class="fa-solid fa-triangle-exclamation"></i> <b>경고:</b> ${step.warning}</div>` : ''}
+                </div>
+            `;
+        });
+        
+        stepsHtml += `
+                </div>
+            </div>
+        `;
+        processEl.innerHTML = stepsHtml;
+    }
+
+    // [섹션 3]: 예상 자재 목록 + 제휴 링크 연동
+    const materialsEl = document.getElementById('ai-section-materials');
+    if (materialsEl) {
+        const problemKey = state.selectedProblem || 'mold';
+        
+        const problemMaterials = {
+            'mold': ['insulation', 'mold_paint', 'foam_bond'],
+            'condensation': ['insulation', 'mold_paint', 'foam_bond'],
+            'insulation': ['insulation', 'foam_bond', 'primer'],
+            'bathroom': ['waterproof', 'bio_silicone'],
+            'floor': ['floor', 'bio_silicone'],
+            'wall': ['wallpaper', 'primer'],
+            'full': ['insulation', 'wallpaper', 'foam_bond'],
+            'unknown': ['insulation', 'mold_paint']
+        };
+        
+        const recoKeys = problemMaterials[problemKey] || problemMaterials['mold'];
+        const materialShoppingMap = {
+            'insulation': {
+                name: '친환경 이보드 단열재',
+                spec: '13T x 900 x 2400',
+                priceRange: '18,000원 ~ 22,000원',
+                rating: '4.8',
+                category: 'insulation',
+                link: 'https://search.shopping.naver.com/search/all?query=%EC%9D%B4%EB%B3%B4%EB%93%9C+%EB%8B%A8%EC%97%B4%EC%9E%AC'
+            },
+            'mold_paint': {
+                name: '덤프프루프 결로 곰팡이 방지 페인트',
+                spec: '4L',
+                priceRange: '35,000원 ~ 42,000원',
+                rating: '4.9',
+                category: 'paint',
+                link: 'https://search.shopping.naver.com/search/all?query=%EA%B2%B0%EB%A1%9C+%EA%B3%B0%ED%8C%A1%EC%9D%B4+%ED%8E%98%EC%9D%B8%ED%8A%B8'
+            },
+            'wallpaper': {
+                name: '친환경 실크 벽지',
+                spec: '1롤 (5.3㎡)',
+                priceRange: '15,000원 ~ 20,000원',
+                rating: '4.7',
+                category: 'wall',
+                link: 'https://search.shopping.naver.com/search/all?query=%EC%8B%A4%ED%81%AC%EB%B2%BD%EC%A7%80'
+            },
+            'primer': {
+                name: '다용도 초강력 젯소/프라이머',
+                spec: '1L',
+                priceRange: '12,000원 ~ 15,000원',
+                rating: '4.6',
+                category: 'paint',
+                link: 'https://search.shopping.naver.com/search/all?query=%EC%A0%AF%EC%86%8C+%ED%94%84%EB%9D%BC%EC%9D%B4%EB%A8%B8'
+            },
+            'waterproof': {
+                name: '욕실/베란다 침투성 에폭시 방수제',
+                spec: '1kg',
+                priceRange: '18,000원 ~ 25,000원',
+                rating: '4.7',
+                category: 'bathroom',
+                link: 'https://search.shopping.naver.com/search/all?query=%EC%B9%A8%ED%88%AC%EC%84%B1+%EB%B0%A9%EC%88%98%EC%A0%9C'
+            },
+            'bio_silicone': {
+                name: '항균 바이오 실리콘 (백색/반투명)',
+                spec: '300ml',
+                priceRange: '3,500원 ~ 5,000원',
+                rating: '4.9',
+                category: 'bathroom',
+                link: 'https://search.shopping.naver.com/search/all?query=%EB%B0%94%EC%9D%B4%EC%98%A4+%EC%8B%AC%EB%A6%AC%EC%BD%98'
+            },
+            'floor': {
+                name: '친환경 장판 바닥재 (1.8mm)',
+                spec: '폭 183cm x 1m',
+                priceRange: '12,000원 ~ 16,000원',
+                rating: '4.7',
+                category: 'floor',
+                link: 'https://search.shopping.naver.com/search/all?query=%EC%B9%A5%ED%99%98%EA%B2%BD+%EC%9E%A5%ED%8C%90'
+            },
+            'foam_bond': {
+                name: '단열재 부착용 우레탄 폼본드',
+                spec: '750ml',
+                priceRange: '7,000원 ~ 9,000원',
+                rating: '4.8',
+                category: 'insulation',
+                link: 'https://search.shopping.naver.com/search/all?query=%EC%9A%B0%EB%A0%88%ED%83%84+%ED%8F%BC%EB%B3%B8%EB%93%9C'
+            }
+        };
+
+        let materialsHtml = `
+            <div style="padding: 20px;">
+                <h3 style="margin: 0 0 16px 0; font-size: 1.1rem; color: #1a202c; font-weight: 800; display:flex; align-items:center; gap:8px;">
+                    <span style="background: #fffaf0; color: #dd6b20; width:28px; height:28px; border-radius:8px; display:inline-flex; align-items:center; justify-content:center;"><i class="fa-solid fa-dolly"></i></span>
+                    AI 추천 자재 및 제휴 쇼핑 리스트
+                </h3>
+                <div style="display:flex; flex-direction:column; gap:16px; margin-bottom:16px;">
+        `;
+        
+        recoKeys.forEach(k => {
+            const item = materialShoppingMap[k];
+            if (!item) return;
+            
+            materialsHtml += `
+                <div class="q-card" style="display:flex; gap:12px; align-items:center; padding:12px; background:#fff; border:1px solid #e2e8f0; border-radius:12px; margin-bottom:0; box-shadow:0 2px 5px rgba(0,0,0,0.02);">
+                    <div style="width:64px; height:64px; border-radius:8px; overflow:hidden; display:flex; align-items:center; justify-content:center; background:#f7fafc; flex-shrink:0;">
+                        <img src="${getFallbackImage(item.category)}" alt="${item.name}" style="width:100%; height:100%; object-fit:cover;" onerror="this.onerror=null; this.src=getFallbackImage('${item.category}')" />
+                    </div>
+                    <div style="flex:1; min-width:0;">
+                        <div style="display:flex; align-items:center; gap:4px; margin-bottom:2px;">
+                            <span style="font-size:0.6rem; background:#fffaf0; color:#dd6b20; border:1px solid #fbd38d; padding:1px 4px; border-radius:4px; font-weight:800;">
+                                <i class="fa-solid fa-award"></i> 셀인 추천
+                            </span>
+                            <span style="font-size:0.75rem; color:#718096;">⭐ ${item.rating}</span>
+                        </div>
+                        <h4 style="margin:0 0 2px 0; font-size:0.85rem; font-weight:800; color:#2d3748; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                            ${item.name}
+                        </h4>
+                        <div style="font-size:0.72rem; color:#718096; display:flex; gap:8px;">
+                            <span>규격: ${item.spec}</span>
+                            <span style="font-weight:700; color:#e53e3e;">${item.priceRange}</span>
+                        </div>
+                    </div>
+                    <a href="${item.link}" target="_blank" class="btn btn-secondary" style="font-size:0.72rem; padding:6px 10px; border-radius:8px; height:auto; color:#2b6cb0; border-color:#bee3f8; background:#ebf8ff; white-space:nowrap; flex-shrink:0; justify-content:center;">
+                        쇼핑몰 <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.65rem;"></i>
+                    </a>
+                </div>
+            `;
+        });
+        
+        materialsHtml += `
+                </div>
+                <button class="btn btn-primary" style="width:100%; justify-content:center; font-weight:900; background:linear-gradient(135deg, #FF7043 0%, #F4511E 100%); border:none; box-shadow: 0 4px 12px rgba(244, 81, 30, 0.25);" onclick="searchAllMaterialsOnNaver()">
+                    <i class="fa-solid fa-cart-arrow-down"></i> 추천 자재 전체 한 번에 담기 (네이버쇼핑)
+                </button>
+            </div>
+        `;
+        materialsEl.innerHTML = materialsHtml;
+    }
+
+    // [섹션 4]: 주의사항 / 실패 위험 포인트 경고 (Warnings)
+    const warningsEl = document.getElementById('ai-section-warnings');
+    if (warningsEl) {
+        let warningsHtml = `
+            <div style="padding: 20px;">
+                <h3 style="margin: 0 0 16px 0; font-size: 1.1rem; color: #c53030; font-weight: 800; display:flex; align-items:center; gap:8px;">
+                    <span style="background: #fff5f5; color: #e53e3e; width:28px; height:28px; border-radius:8px; display:inline-flex; align-items:center; justify-content:center;"><i class="fa-solid fa-triangle-exclamation"></i></span>
+                    시공 주의사항 및 위험도 검증
+                </h3>
+                <div style="display:flex; flex-direction:column; gap:10px;">
+        `;
+        
+        if (warnings.length > 0) {
+            warnings.forEach(w => {
+                warningsHtml += `
+                    <div style="background: #fff5f5; border: 1px solid #fed7d7; padding: 10px 12px; border-radius:8px; font-size:0.8rem; color:#9b2c2c; display:flex; gap:8px; align-items:start;">
+                        <i class="fa-solid fa-circle-exclamation" style="margin-top:2px; flex-shrink:0;"></i>
+                        <span style="line-height:1.4;">${w}</span>
+                    </div>
+                `;
+            });
+        } else {
+            warningsHtml += `
+                <div style="background: #f0fff4; border: 1px solid #c6f6d5; padding: 10px 12px; border-radius:8px; font-size:0.8rem; color:#22543d; display:flex; gap:8px; align-items:start;">
+                    <i class="fa-solid fa-circle-check" style="margin-top:2px; flex-shrink:0;"></i>
+                    <span style="line-height:1.4;">특별히 감지된 대형 하자 위험 요인은 없습니다. 안심하고 자재 정량 시공 가이드를 충실히 따라 주세요!</span>
+                </div>
+            `;
+        }
+        
+        warningsHtml += `
+                </div>
+            </div>
+        `;
+        warningsEl.innerHTML = warningsHtml;
+    }
+}
+}
+
+// 전체 자재 네이버 쇼핑 일괄 검색/장바구니 헬퍼
+function searchAllMaterialsOnNaver() {
+    showToast("🛒 최저가 제휴 자재를 일괄 검색 중입니다. 자체 장바구니 담기는 곧 연동됩니다!");
+    const problemKey = state.selectedProblem || 'mold';
+    const problemMap = {
+        'mold': '결로 곰팡이 방지 페인트 이보드 단열재',
+        'condensation': '결로 방지 페인트 이보드 단열재',
+        'insulation': '이보드 단열재 우레탄 폼본드',
+        'bathroom': '침투성 방수제 바이오 실리콘',
+        'floor': '친환경 장판 바이오 실리콘',
+        'wall': '실크 벽지 젯소 프라이머'
+    };
+    const query = problemMap[problemKey] || '셀프 인테리어 자재';
+    const naverShoppingUrl = `https://search.shopping.naver.com/search/all?query=${encodeURIComponent(query)}`;
+    window.open(naverShoppingUrl, '_blank');
 }
 
 // ==========================================
@@ -2027,7 +2296,10 @@ Object.assign(window, {
     getFallbackImage,
 
     // 토스트 알림
-    showToast
+    showToast,
+
+    // 일괄 자재 쇼핑 검색
+    searchAllMaterialsOnNaver
 });
 
 // ==========================================
